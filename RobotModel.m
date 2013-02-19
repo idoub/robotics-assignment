@@ -18,9 +18,8 @@ classdef RobotModel < handle
 
     methods (Access = private)
         function move(RM,dist,rads)
-            [plusX,plusY] = pol2cart(rads,dist);                                % Convert from polar coordinates to cartesian
-            RM.x = RM.x + plusX;                                                % Increase the x direction
-            RM.y = RM.y + plusY;                                                % Increase the y direction
+            RM.x = RM.x + dist*cos(rads);
+            RM.y = RM.y + dist*sin(rads);
         end
     end
 
@@ -96,25 +95,47 @@ classdef RobotModel < handle
         end
         
         function [out] = sense(RM,M,numreadings)
-                hold on
-            % First reading at theta
-            % Each successive previous + pi/4 for 7 more readings
-            for n=1:length(M)
-                if n == length(M)
-                    XY1 = [M(n,1),M(n,2),M(1,1),M(1,2)];
-                else
-                    XY1 = [M(n,1),M(n,2),M(n+1,1),M(n+1,2)];
-                end
-                
-                RayX = 200*cos(RM.theta) + RM.x;
-                RayY = 200*sin(RM.theta) + RM.y;
-                plot([RM.x,RayX],[RM.y,RayY],'--r');
-                XY2 = [RM.x,RM.y,RayX,RayY];                                % The scan ray
-                out = lineSegmentIntersect(XY1,XY2)
-                if(out.intAdjacencyMatrix == 1)
-                    plot(out.intMatrixX,out.intMatrixY,'-ro');
+            M1 = circshift(M,1);                                                % Shift M circularly by one
+            XY1 = [M(:,1),M(:,2),M1(:,1),M1(:,2)];                              % Form new matrix of each element in M with the next element
+            
+            angleChange = (2*pi)/numreadings;                                   % Calculate the change in angle according to the number of readings requested
+            angle = -pi;                                                        % Starting angle is -pi (relative to robot this would be backwards)
+            out = zeros(1,numreadings)
+            for m=1:numreadings                                                 % For each reading
+                out(m) = RM.senseSingle(XY1,angle);                             % Take a sensor measurement
+                angle = angle + angleChange;                                    % Adjust the angle of the next measurement
+            end
+            
+            figure(2);
+            hold on;
+            plot(0:numreadings-1,out,'*');
+            %coefs = polyfit(0:numreadings-1,out,numreadings/2);                 % These two linesplot a polynomial of degree numreadings/2that best fits the point already on the graph
+            %plot(0:0.1:numreadings-1,polyval(coefs,0:0.1:numreadings-1),'-r');
+        end
+        
+        function [out] = senseSingle(RM,XY1,angle)
+            RayX = 200*cos(angle) + RM.x;                                       % Calculate the ray vector
+            RayY = 200*sin(angle) + RM.y;
+            
+            XY2 = [RM.x,RM.y,RayX,RayY];                                        % The scan ray
+            result = lineSegmentIntersect(XY1,XY2);
+
+            Dist = zeros(0,1);
+            n=0;
+            for i=1:length(XY1(:,1))
+                if result.intAdjacencyMatrix(i) == 1                            % If there is a collision
+                    n=n+1;                                                      % Increment the counter and calculate the distance from the robot to the collision
+                    Dist(n) = sqrt((result.intMatrixX(i)-RM.x)^2 + (result.intMatrixY(i)-RM.y)^2);
                 end
             end
+
+            intersectX = min(Dist)*cos(angle) + RM.x;                           % Find the point of intersection
+            intersectY = min(Dist)*sin(angle) + RM.y;
+            hold on
+            plot([RM.x,intersectX],[RM.y,intersectY],'--r');                    % Plot the ray to the point
+            plot(intersectX,intersectY,'-ro');                                  % Plot the point
+            
+            out = min(Dist);
         end
 
         function show(RM)
