@@ -1,67 +1,70 @@
 function [Path] = Pathfinding(M,P1,P2)
-%PATHFINDING Finds the shortest path between two points.
-%   Takes a map of type M=[X1,Y1;X2,Y2;...XN-1,YN-1], a start
-%   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
-%   are the shortest path to get from P1 to P2.
+    %PATHFINDING Finds the shortest path between two points.
+    %   Takes a map of type M=[X1,Y1;X2,Y2;...XN-1,YN-1], a start
+    %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
+    %   are the shortest path to get from P1 to P2.
 
-% 1) Generate points from map robot can pass through
-%   a) Identify a Maximum, or a Minimum point
-%   b) Starting at that point, decrease the clockwise edge by width of
-%   robot (should always be moving the edge right if my logic is correct).
-%   c) Repeat for all points in series
-%   d) Using new edges, identify intersections. These intersections become
-%   the vertices of the new 'navigable' map
-% 2) Add P1 and P2 to graph of connected points
-% 3) Connect all points that can see each other
-%   a) Connect each point to every other point, and check intersections
-%   with 'navigable' map.
-% 4) Find distances between all points in graph.
-% 5) Find shortest path from P1 to P2 through graph
+    ROBOTWIDTH = 15;
+    Path = [];
+    Graph = [];
 
-% % If the first point in the map is not 0,0, reverse the order of the points
-% % Hopefully fixes maps that have been provided in a clockwise direction.
-% % The rest of the algorithm assumes that points are provided in an
-% % anti-clockwise direction.
-% if(~isequal(M(1,:),[0,0]))
-%     flipud(M);
-% end
-% 
-% % Split the map into x and y
-% MX = M(:,1);
-% MY = M(:,2);
-% 
-% % Define the bounding box
-% bounds = [min(MX),min(MY); max(MX),min(MY); max(MX),max(MY); min(MX),max(MY)];
-% 
-% % Find points on the map that are also part of the bounding box (clearly
-% % doesn't work for all maps) and return their index.
-% boundingPointIndex = ismember(M,bounds,'rows')
-% 
-% 
-% % Starting with the first line from the bounding box, move it towards the
-% % end point.
+    hold all
+    plot(M(:,1),M(:,2))
 
-ROBOTWIDTH = 100;
+    % Define lines from points
+    M1 = circshift(M,1);
+    Lines = [M1(:,1) - M(:,1), M1(:,2) - M(:,2)];
 
-hold on
-plot(M(:,1),M(:,2))
+    % Find normals
+    Normals = [Lines(:,2),0-Lines(:,1)];
+    Normals = sign(Normals) * ROBOTWIDTH;
 
-% Define lines from points
-M1 = circshift(M,1);
-V1 = (M1(:,1:2) - M(:,1:2));
-V2 = (M(:,1:2) - M1(:,1:2));
-V2 = circshift(V2,-1);
+    % Add normals to both points at either end of line to make new navigation
+    % area
+    N1 = circshift(Normals,-1);
+    Nav = M + Normals + N1;
+    fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
 
-V1 = V1/norm(V1);
-V2 = V2/norm(V2);
+    % Make a list of nodes for pathfinding
+    Nodes = [P1; Nav; P2];
 
-bi = (V1 + V2) * ROBOTWIDTH;
-bi = bi + M;
-nan = NaN(size(M));
-bisectors = reshape([M(:) bi(:) nan(:)]',3*size(M,1), []);
-plot(bisectors(:,1),bisectors(:,2),'r');
+    % Make navigation mesh
+    Nav1 = circshift(Nav,1);
+    NavMesh = [Nav(:,1),Nav(:,2),Nav1(:,1),Nav1(:,2)];
+    
+    % For each node find paths to every other visible node
+    for i=1:length(Nav)
+        % Make lines from current node to every node in map
+        currentNodeRepeated = repmat(Nodes(i,:),length(Nodes(:,1)),1);
+        lines = [Nodes(:,1),Nodes(:,2),currentNodeRepeated(:,1),currentNodeRepeated(:,2)];
 
-[xi,yi] = polyxpoly(bisectors(:,1),bisectors(:,2),bisectors(:,1),bisectors(:,2))
-mapshow(xi,yi,'DisplayType','point','Marker','o')
+        intersections = lineSegmentIntersect(lines,NavMesh);                    % Check for intersections
+
+        % For each line, check it's intersection points and whether it can be
+        % added to the graph
+        for j=2:length(lines)
+            cp = [intersections.intMatrixX(j,:);intersections.intMatrixY(j,:)]';% Make matrix of collision points
+            cp(ismember(cp,Nav,'rows'),:) = 0;                                  % Remove actual map points
+            cp(~any(isnan(cp),2),:);                                            % Remove NAN row
+
+            if(all(cp==0))                                                      % If all elements are zero
+                center = [(lines(j,3) - lines(j,1))/2 + lines(j,1),             % Find center point of each line
+                    (lines(j,4) - lines(j,2))/2 + lines(j,2)];
+                [in on] = inpolygon(center(1),center(2),Nav(:,1),Nav(:,2));     % Find whether the center is actually within the navigation mesh
+                
+                if(in==1)                                                       % If the center does lie within the navigation mesh
+                    Graph = [Graph; lines];                                     % Add this line to the graph
+                    plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                end
+            end
+        end
+    end
+    
+    distances = sqrt((Graph(:,1)-Graph(:,3)).^2 + (Graph(:,2)-Graph(:,4)).^2);  % Calculate distances of all lines in graph
+    
+    % Now just run Dijkstra's algorithm to find the optimal path
+
+    plot(P1(1,1),P1(1,2),'*r')
+    plot(P2(1,1),P2(1,2),'*r')
+
 end
-
