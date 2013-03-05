@@ -2,7 +2,8 @@ function [ output_args ] = dijkstra( Graph, Dist )
 %DIJKSTRA Summary of this function goes here
 %   Detailed explanation goes here
 
-NodeDistances = [];
+NodeDistances = []
+for
     % Dijkstra's algorithm
 %      1  function Dijkstra(Graph, source):
 %      2      for each vertex v in Graph:                                // Initializations

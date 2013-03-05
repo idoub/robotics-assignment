@@ -45,12 +45,13 @@ function [Path] = Pathfinding(M,P1,P2)
         for j=2:length(lines)
             cp = [intersections.intMatrixX(j,:);intersections.intMatrixY(j,:)]';% Make matrix of collision points
             cp(ismember(cp,Nav,'rows'),:) = 0;                                  % Remove actual map points
-            cp(all(isnan(cp),2),:) = 0;                                         % Remove NAN rows
+            cp(all(isnan(cp),2),:) = 0;                                           % Remove NAN rows
             
-            center = [(lines(j,3) - lines(j,1))/2 + lines(j,1),                 % Find center point of each line
+            center = [(lines(j,3) - lines(j,1))/2 + lines(j,1),             % Find center point of each line
                 (lines(j,4) - lines(j,2))/2 + lines(j,2)];
-            [in on] = inpolygon(center(1),center(2),Nav(:,1),Nav(:,2));         % Find whether the center is actually within the navigation mesh
-            cp(on)=0;                                                           % Include lines that are incident with navigation mesh edges
+            [in on] = inpolygon(center(1),center(2),Nav(:,1),Nav(:,2));     % Find whether the center is actually within the navigation mesh
+            cp(on)=0;
+            cp
 
             if(all(cp==0))                                                      % If all elements are zero
                 if(in==1)                                                       % If the center does lie within the navigation mesh
