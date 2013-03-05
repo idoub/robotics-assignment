@@ -80,7 +80,7 @@ classdef RobotModel < handle
                 rotate = rotate - (2*pi);
             end
 
-            if rotate > 0                                                      % Determine which direction to turn and then rotate
+            if rotate > pi                                                      % Determine which direction to turn and then rotate
                 RM.right(rotate);
                 disp(['Turn right ',num2str(rotate),' degrees.']);
             else

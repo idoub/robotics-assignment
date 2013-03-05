@@ -7,26 +7,24 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-goal=[10,80];
-step=10;
-
+goal = [80,80];
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
-RealRobot=RobotModel(80,80, 13 *pi/180);%robot use for simulating captor
-         plot(RealRobot.x,RealRobot.y,'or');
-KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding
-                ToGo=[10,80]; %REMOVE WHEN PATHFINDING WORK
+% Robot=RobotModel(55,25,pi + 13 *pi/180);%start position and orientation
+% move=[step 0;step -13;step 0;step -90; step 0;step 0;step 0;step 0;step -90;step 0; step 0; step 0; step 0; step 0]; % sequence of motions
+% move(:,2)=move(:,2).*(pi/180); % convert degrees to radians 
+
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
 orientstd=1.5; % orientation standard deviation in degrees
 Wgtthreshold= 0.50; % relative limit to keep the particles 
 dump =0; %anti dumping coef
 ScanLarge=4; % how far the resample particle are randomly distributed aroud heavy solution in space
-ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
+ScanTheta=0; % how far the resample particle are randomly distributed aroud heavy solution in space
 %-------------------------------Sensor------------------------------------
 nbmeasure = 4; %number of measurement
 sensorstd = 10; % error of sensor for calculation
-sensorstdReal = 1.1;%real error of sensor 
+sensorstdReal = 4; %real error of sensor 
 %----------------------- initialisation of the particles-------------------
 xyRes = 10;
 ThetaRes = 36;
@@ -61,7 +59,7 @@ end
 
 nparticles = k
 plot(x,y,'+')
-
+plot(Robot.x,Robot.y,'or'); 
 
 %1/Weight
 for i=1:nparticles
@@ -72,18 +70,20 @@ end
 
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% END INITIALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 move=0;
 moveTheta=0;
-stop = false
-while stop == false, % number of steps
+Stop=false; 
+while Stop=false % loop until stop is set to one
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT SENSOR  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    %-----Reading Robot sensor----------
-    sensorRobot =sense(RealRobot,M,nbmeasure); % distance from 0 to a fictional wall + error
-    for h=1:nbmeasure
-        sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
-    end
+%     sensorRobot =sense(Robot,M,nbmeasure); % distance from 0 to a fictional wall + error
+%     for h=1:nbmeasure
+%         sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
+%     end
+%  
     %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     for j=1:nparticles %repet times number of particles
@@ -166,43 +166,46 @@ while stop == false, % number of steps
     for j=1:nparticles
         w(j)=w(j)/S;
     end
- %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT MOVE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT MOVE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %-----------------------  change position  ------------------------------
   [~,MaxInd]=max(w); %MaxInd is the indice of the heaviest particle
-  KnowRobot=RobotModel(x(MaxInd),y(MaxInd),theta(MaxInd));
-  
-  
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
-  waitforbuttonpress; % enable to plot step by step
-  hold on
-  plot(M(:,1),M(:,2));  %map 
-  plot(goal(1),goal(2),'*r'); %plot goal
-  plot(x,y,'b+');       %particles
-  plot(KnowRobot.x,KnowRobot.y,'xr');   %know position of the robot  
-  plot(RealRobot.x,RealRobot.y,'or');   %True position 
- 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
-    
+  RM.x=x(MaxInd)
+  RM.y=y(MaxInd)
+  RM.theta=theta(MaxInd)
   %-----------------------  Path finding  ---------------------------------
- %%%%%%%%%%%%%%%%%%%%%%%%clear ToGo;
- %%%%%%%%%%%%%%%%%%%%%%%%ToGo = Pathfinding(M,[KnowRobot.x,KnowRobot.y],goal);
+
+ clear ToGo;
+ ToGo = Pathfinfing(M,[RM.x,RM.y],goal);
   %-----------------------  Motion  ---------------------------------------
-
-  dist= sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 )
+%   % Go to the next node 
+%   j=1;
+%   [S,~] = size(ToGo);  %until dist = step or ToGo empty
+  dist= sqrt( (ToGo(1,1)-x(MaxInd))^2 + (ToGo(1,2)-y(MaxInd))^2 );
   if dist > step
-      xgo= (ToGo(1,1)-KnowRobot.x)*step/dist + KnowRobot.x
-      ygo= (ToGo(1,2)-KnowRobot.y)*step/dist + KnowRobot.y
-      [move,moveTheta] = goto(KnowRobot,xgo,ygo)% go to the next position. move and moveTheta are used for the  particles filters
+      xgo= (Togo(1,1)-RM.x)*step/dist;
+      ygo= (Togo(1,2)-RM.y)*step/dist;
+      [move,moveTheta] = goto(RM,xgo,ygo);% go to the next position. move and moveTheta are used for the  particles filters
   else
-      [move,moveTheta] = goto(KnowRobot,ToGo(1,1),ToGo(1,2));
-  end
-%------------------------ Simulated real  robot----------------------------
-left(RealRobot,moveTheta);
-forward(RealRobot,move);
-     
+      
+      
+      
+  
 
+  
 
+% left(Robot,move(i,2))  %rotate
+% forward(Robot,step) %move
+   
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  %waitforbuttonpress; % enable to plot step by step
+  hold on
+  plot(M(:,1),M(:,2)); 
+  plot(x,y,'b+');
+  [~,MaxInd]=max(w);
+  plot(x(MaxInd),y(MaxInd),'xr');
+  plot(Robot.x,Robot.y,'or');  
+  
                                                                            
 end
                                                                              
