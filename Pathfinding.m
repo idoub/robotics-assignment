@@ -54,16 +54,22 @@ function [Path] = Pathfinding(M,P1,P2)
 
             if(all(cp==0))                                                      % If all elements are zero
                 if(in==1)                                                       % If the center does lie within the navigation mesh
-                    Graph = [Graph; lines];                                     % Add this line to the graph
-                    plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                    lineReverse = [lines(j,3:4),lines(j,1:2)];                  % Reverse the line
+                    if(~ismember(lineReverse,Graph,'rows'))                     % If the reverse isn't already included in the graph
+                        Graph = [Graph; lines(j,:)];                            % Add this line to the graph
+                        plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                    end
                 end
             end
         end
     end
     
+    Graph(all(Graph(:,1:2)==Graph(:,3:4),2),:) = [];                            % Remove connections from nodes to themselves
+    
     distances = sqrt((Graph(:,1)-Graph(:,3)).^2 + (Graph(:,2)-Graph(:,4)).^2);  % Calculate distances of all lines in graph
     
     % Now just run Dijkstra's algorithm to find the optimal path
+    dijkstra(Graph, Nodes, distances);
 
     plot(P1(1,1),P1(1,2),'*r')
     plot(P2(1,1),P2(1,2),'*r')
