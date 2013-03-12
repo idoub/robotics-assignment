@@ -72,9 +72,8 @@ function [Path] = Pathfinding(M,P1,P2)
     distances = sqrt((Graph(:,1)-Graph(:,3)).^2 + (Graph(:,2)-Graph(:,4)).^2);  % Calculate distances of all lines in graph
     
     % Now just run Dijkstra's algorithm to find the optimal path
-    dijkstra(Graph, Nodes, distances);
-
-    % plot(P1(1,1),P1(1,2),'*r')
-    % plot(P2(1,1),P2(1,2),'*r')
+    Paths = dijkstra(Graph, Nodes, distances);
+    Path = [Paths{length(Paths)},length(Paths)];
+    Path = Path(2:end-1)
 
 end
