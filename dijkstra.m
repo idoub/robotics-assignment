@@ -3,15 +3,15 @@ function [ output_args ] = dijkstra( Graph, Nodes, Dist )
 %   Detailed explanation goes here
 
 
-Tentative = Inf(length(Nodes),1);
 NodeDistances = Inf(length(Nodes),1);
 NodeDistances(1) = 0;
 i = 1;
 Unvisited = (1:length(Nodes))';
 Visited = [];
 
-%while length(Unvisited) > 0
-for j=1:2%length(Nodes)
+%for j=1:length(Nodes)
+while(~find(Visited == 10))
+    Tentative = Inf(length(Nodes),1);
     % Find the actual connected nodes to the current
     indxCol1 = ismember(Graph(:,1:2),Nodes(i,:),'rows');                        % Check where this node appears in column 1 of Graph
     indxCol2 = ismember(Graph(:,3:4),Nodes(i,:),'rows');                        % Check where this node appears in column 2 of Graph
@@ -19,18 +19,16 @@ for j=1:2%length(Nodes)
     nodeIndex = ismember(Nodes,ConnectedNodes,'rows');                          % Generate an index of appearances
     
     distIndex = any([indxCol1,indxCol2],2);                                     % Grab an index of the distances
-    Tentative(nodeIndex) = NodeDistances(i) + Dist(distIndex);                  % Calculate a tentative distance
+    Tentative(nodeIndex) = NodeDistances(i) + Dist(distIndex)                  % Calculate a tentative distance
     
-    copyIndex = Tentative < NodeDistances;                                      % Create an index of where the tentative distance is less than the current best
-    NodeDistances(copyIndex) = Tentative(copyIndex);                            % Copy over only those values
+    copyIndex = Tentative < NodeDistances                                      % Create an index of where the tentative distance is less than the current best
+    NodeDistances(copyIndex) = Tentative(copyIndex)                            % Copy over only those values
     
     Visited = [Visited;i]                                                      % Add current node to visited list
-    Unvisited(i,:) = []                                                        % Remove current node from unvisited list
+    Unvisited(find(Unvisited == i)) = []                                       % Remove current node from unvisited list
     
-    Tentative(Unvisited)
-    
-    [~, i] = min(Tentative(Unvisited))
-    NodeDistances(i)
+     [~, i] = min(Tentative(Unvisited));                                        % Change the new current node to the one with the minimum distance in Unvisited
+     i = Unvisited(i)
 end
 
     % Dijkstra's algorithm

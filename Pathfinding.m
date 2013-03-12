@@ -27,6 +27,9 @@ function [Path] = Pathfinding(M,P1,P2)
 
     % Make a list of nodes for pathfinding
     Nodes = [P1; Nav; P2];
+    for i=1:length(Nodes)
+        text(Nodes(i,1)-1,Nodes(i,2)-1,num2str(i));
+    end
 
     % Make navigation mesh
     Nav1 = circshift(Nav,1);
@@ -71,7 +74,7 @@ function [Path] = Pathfinding(M,P1,P2)
     % Now just run Dijkstra's algorithm to find the optimal path
     dijkstra(Graph, Nodes, distances);
 
-    plot(P1(1,1),P1(1,2),'*r')
-    plot(P2(1,1),P2(1,2),'*r')
+    % plot(P1(1,1),P1(1,2),'*r')
+    % plot(P2(1,1),P2(1,2),'*r')
 
 end
