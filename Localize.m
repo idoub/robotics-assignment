@@ -8,7 +8,7 @@ hold on
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
 T=[10,80];
-S=[50,25];
+S=[20,25];
 step=10;
 
 %-------------------------Robot simulation---------------------------------
@@ -20,17 +20,18 @@ KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
 orientstd=1.5; % orientation standard deviation in degrees
-Wgtthreshold= 0.25; % relative limit to keep the particles 
+Wgtthreshold= 0.1; % relative limit to keep the particles 
 dump =0; %anti dumping coef
-ScanLarge=4; % how far the resample particle are randomly distributed aroud heavy solution in space
+ScanLarge=2; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
+dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
 %-------------------------------Sensor------------------------------------
 nbmeasure = 4; %number of measurement
-sensorstd = 15; % error of sensor for calculation
-sensorstdReal = 0%5;%real error of sensor 
+sensorstd = 30; % error of sensor for calculation
+sensorstdReal = 5%5;%real error of sensor 
 %----------------------- initialisation of the particles-------------------
-xyRes = 10;
-ThetaRes = 36;
+xyRes = 8;
+ThetaRes = 50;
 
 MaxX = max(M(:,1));
 MaxY = max(M(:,2));
@@ -123,44 +124,8 @@ while stop == false, % number of steps
     w=w/S;
 
     %------------------------- Resampling ---------------------------------
+[x,y,theta,w ]=resample(Wgtthreshold,x,y,theta,w,ScanTheta*orientstd,ScanLarge*transstd,dist);
 
-    %1/detect the heavy and in the map particles to keep
-    keep = zeros(0);
-    resamp = zeros(0);
-    k=1;
-    m=1;
-    %Normalize the threshold
-    MaxWeight = max(w);
-    AbsThreshold = Wgtthreshold*MaxWeight;
-    for j =1:nparticles
-        if (w(j) > AbsThreshold) 
-            keep(k) =j; %record the position of the heavy particles
-            k= k+1;
-        else
-            resamp(m)=j;
-            m= m+1;
-        end
-    end
-    disp('keep = ');
-    disp(length(keep));
-    %3/resample around heavy particles with the same weight than the assign
-    %particles. If keep is empty we are lost and make a random distribution
-    %one again
-    if k>1 % keep is not empty
-        for j=1:length(resamp)
-            x(resamp(j))=x(keep(mod(j,length(keep))+1)) + ScanLarge*rand(1,1)*transstd;
-            y(resamp(j))=y(keep(mod(j,length(keep))+1)) + ScanLarge*rand(1,1)*transstd;
-            theta(resamp(j))=theta(keep(mod(j,length(keep))+1)) + ScanTheta*rand(1,1)*orientstd;
-            w(resamp(j))=w(keep(mod(j,length(keep))+1));
-        end
-    else %(keep is empty)
-        x = unifrnd(0,MaxX,1,nparticles); 
-        y = unifrnd(10,MaxY,1,nparticles);
-        theta = unifrnd(0,2*pi,1,nparticles);
-        for m=1:nparticles
-             w(m)=1/nparticles;
-        end
-    end
 
     %3/ We need to re normalise the weight
     S=sum(w);
