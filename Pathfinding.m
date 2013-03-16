@@ -9,7 +9,7 @@ function [Path] = Pathfinding(M,P1,P2)
     Graph = [];
 
     hold all
-    plot(M(:,1),M(:,2))
+    %plot(M(:,1),M(:,2))
 
     % Define lines from points
     M1 = circshift(M,1);
@@ -23,7 +23,7 @@ function [Path] = Pathfinding(M,P1,P2)
     % area
     N1 = circshift(Normals,-1);
     Nav = M + Normals + N1;
-    fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
+    %fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
 
     % Make a list of nodes for pathfinding
     Nodes = [P1; Nav; P2];
@@ -60,7 +60,7 @@ function [Path] = Pathfinding(M,P1,P2)
                     lineReverse = [lines(j,3:4),lines(j,1:2)];                  % Reverse the line
                     if(~ismember(lineReverse,Graph,'rows'))                     % If the reverse isn't already included in the graph
                         Graph = [Graph; lines(j,:)];                            % Add this line to the graph
-                        plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                        %plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
                     end
                 end
             end
@@ -73,7 +73,8 @@ function [Path] = Pathfinding(M,P1,P2)
     
     % Now just run Dijkstra's algorithm to find the optimal path
     Paths = dijkstra(Graph, Nodes, distances);
-    Path = [Paths{length(Paths)},length(Paths)];
-    Path = Path(2:end-1)
+    PathIndex = [Paths{length(Paths)},length(Paths)];
+    PathIndex = PathIndex(2:end);
+    Path = Nodes(PathIndex,:);
 
 end
