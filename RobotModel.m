@@ -91,7 +91,7 @@ classdef RobotModel < handle
             RM.move(dist,RM.theta);                                             % Move in that direction
             disp(['Move forward ',num2str(dist),'.']);
             hold on;
-            plot(RM.x,RM.y,'rx');
+      %      plot(RM.x,RM.y,'rx');
         end
         
         function [out] = sense(RM,M,numreadings)
