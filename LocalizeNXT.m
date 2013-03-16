@@ -6,16 +6,15 @@ hold on
 
 %-------------------------Map definition-----------------------------------
 
-M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-goal=[10,80];
-step=10;
+M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105];
+goal=[30,80];
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
 %RealRobot=RobotModel(80,80, 13 *pi/180);%robot use for simulating captor
 %         plot(RealRobot.x,RealRobot.y,'or');
 KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding
-                ToGo=[10,80]; %REMOVE WHEN PATHFINDING WORK
+                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
                 
 nxt = NXTRobot(80,80,pi);
 nxt.initAll();
@@ -62,8 +61,8 @@ for i=1:round(MaxX/xyRes)*round(MaxY/xyRes)
     end
 end
 
-nparticles = k
-plot(x,y,'+')
+nparticles = k;
+plot(x,y,'+');
 
 
 %1/Weight
@@ -77,7 +76,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% END INITIALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%
 move=0;
 moveTheta=0;
-stop = false
+stop = false;
 while stop == false, % number of steps
     
     %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -87,7 +86,7 @@ while stop == false, % number of steps
     %for h=1:nbmeasure
         %sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
     %end
-    sensorRobot = nxt.sense(nbmeasure);
+    sensorRobot = nxt.sense(nbmeasure)
     %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     for j=1:nparticles %repet times number of particles
@@ -174,8 +173,8 @@ while stop == false, % number of steps
   %-----------------------  change position  ------------------------------
   [~,MaxInd]=max(w); %MaxInd is the indice of the heaviest particle
   KnowRobot=RobotModel(x(MaxInd),y(MaxInd),theta(MaxInd));
-  nxt.position(KnowRobot.x,KnowRobot.y,KnowRobot.theta);
-  
+  %nxt.position(KnowRobot.x,KnowRobot.y,KnowRobot.theta);
+  nxt.position(x(MaxInd),y(MaxInd),theta(MaxInd));
   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
@@ -194,17 +193,15 @@ while stop == false, % number of steps
  %%%%%%%%%%%%%%%%%%%%%%%%ToGo = Pathfinding(M,[KnowRobot.x,KnowRobot.y],goal);
   %-----------------------  Motion  ---------------------------------------
 
-  dist= sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 )
+  dist = sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 );
   if dist > step
-      xgo= (ToGo(1,1)-KnowRobot.x)*step/dist + KnowRobot.x
-      ygo= (ToGo(1,2)-KnowRobot.y)*step/dist + KnowRobot.y
-      [move,moveTheta] = nxt.goto(xgo,ygo)% go to the next position. move and moveTheta are used for the  particles filters
+      xgo= (ToGo(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
+      ygo= (ToGo(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
+      [move,moveTheta] = nxt.goto(xgo,ygo);% go to the next position. move and moveTheta are used for the  particles filters
   else
       [move,moveTheta] = nxt.goto(ToGo(1,1),ToGo(1,2));
   end
 %------------------------ Simulated real  robot----------------------------
-     
-
 
                                                                            
 end

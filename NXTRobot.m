@@ -41,9 +41,9 @@ classdef NXTRobot < handle
             NXT.theta = theta;
             
             % turning the motor 360deg should make the wheel travel 14cm
-            NXT.cmToTacho = 360/NXT.wheelCirc
+            NXT.cmToTacho = 360/NXT.wheelCirc;
             % when turning one radian, one wheel travels 2*wheelRadius cm
-            NXT.radToTacho = 2 * NXT.wheelRadius * NXT.cmToTacho
+            NXT.radToTacho = 2 * NXT.wheelRadius * NXT.cmToTacho;
         end
 		
         % SETUP
@@ -118,11 +118,12 @@ classdef NXTRobot < handle
         end
         
         % POSITION
-        function position(NXT,x,y,theta)
-            NXT.x = x;
-            NXT.y = y;
-            NXT.theta = theta;
+        function position(NXT,newX,newY,newTheta)
+            NXT.x = newX;
+            NXT.y = newY;
+            NXT.theta = newTheta;
         end
+        
 		% MOVEMENT
         % general movement function
         function [dist rotate] = goto(NXT,newX,newY)
@@ -153,7 +154,7 @@ classdef NXTRobot < handle
             % update position
             NXT.x = newX;
             NXT.y = newY;
-            NXT.theta = newAngle;            
+            NXT.theta = newAngle; 
         end
         
 		% move forward
@@ -238,15 +239,17 @@ classdef NXTRobot < handle
              else
                 NXT.mSensor.Power = -60;
              end
-             for m=1:numreadings                                                % For each reading
+             for m=1:numreadings-1                                              % For each reading
                 out(m) = NXT.senseSingle();                             		% Take a sensor measurement
                 NXT.turnSensor(angleChange);
              end
+             % we don't actually make the last turn, to save some time
+             out(m) = NXT.senseSingle();
              
              % we return the results in clockwise order (0,pi/2,pi,3*pi/2)
              % so if we've rotated ccw, then shift the results
              if NXT.count==1
-                 out = [out(1) out(end:-1:2)];
+                 out = out(end:-1:1);
              end
              
              NXT.count = mod(NXT.count+1,2);
@@ -255,8 +258,13 @@ classdef NXTRobot < handle
 		function reading = senseSingle(NXT)
 			% get reading and compensate for possible error
 			% readings are integers
-			reading = round(GetUltrasonic(SENSOR_4) - ( NXT.ultraErrorMean + NXT.ultraErrorStdDev.*randn(1,1)))
-            reading = GetUltrasonic(SENSOR_4)
+			reading = round(GetUltrasonic(SENSOR_4) - ( NXT.ultraErrorMean + NXT.ultraErrorStdDev.*randn(1,1)));
+            % arena size can be assumed to be limited (e.g. 120cm)
+            % if measurement reading is greater than assumed limit,
+            % the sensor is actually too close to the wall
+            if reading > 120
+                reading = 4;
+            end
 		end
 		
 	end
