@@ -7,31 +7,33 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105];
-goal=[30,80];
+goal=[80,80];
+nextstep = goal;
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
 %RealRobot=RobotModel(80,80, 13 *pi/180);%robot use for simulating captor
 %         plot(RealRobot.x,RealRobot.y,'or');
 KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding
-                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
+                ToGo=[80,80]; %REMOVE WHEN PATHFINDING WORK
                 
-nxt = NXTRobot(80,80,pi);
+nxt = NXTRobot(0,0,pi/2);
 nxt.initAll();
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
 orientstd=1.5; % orientation standard deviation in degrees
-Wgtthreshold= 0.50; % relative limit to keep the particles 
+Wgtthreshold= 0.10; % relative limit to keep the particles 
 dump =0; %anti dumping coef
-ScanLarge=4; % how far the resample particle are randomly distributed aroud heavy solution in space
+ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
+dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
 %-------------------------------Sensor------------------------------------
-nbmeasure = 4; %number of measurement
-sensorstd = 10; % error of sensor for calculation
+nbmeasure = 5; %number of measurement
+sensorstd = 30; % error of sensor for calculation
 %sensorstdReal = 1.1;%real error of sensor 
 %----------------------- initialisation of the particles-------------------
-xyRes = 10;
-ThetaRes = 36;
+xyRes = 8;
+ThetaRes = 50;
 
 MaxX = max(M(:,1));
 MaxY = max(M(:,2));
@@ -86,7 +88,7 @@ while stop == false, % number of steps
     %for h=1:nbmeasure
         %sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
     %end
-    sensorRobot = nxt.sense(nbmeasure)
+    [sensorRobot angleError] = nxt.sense(nbmeasure,60);
     %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     for j=1:nparticles %repet times number of particles
@@ -107,7 +109,7 @@ while stop == false, % number of steps
      
     for j=1:nparticles 
         if InArena(j) == 1 % calculate weight only if the particles is in the map
-            sensorParticles = senseParticles(x(j),y(j),theta(j),M,nbmeasure);
+            sensorParticles = senseParticles(x(j),y(j),theta(j),M,nbmeasure,angleError);
             wBefore=w(j);
             w(j)=1;
             for k = 1:nbmeasure %for each measure
@@ -125,44 +127,45 @@ while stop == false, % number of steps
     w=w/S;
 
     %------------------------- Resampling ---------------------------------
+    [x,y,theta,w ]=resample(Wgtthreshold,x,y,theta,w,ScanTheta*orientstd,ScanLarge*transstd,dist);
 
-    %1/detect the heavy and in the map particles to keep
-    keep = zeros(0);
-    resamp = zeros(0);
-    k=1;
-    m=1;
-    %Normalize the threshold
-    MaxWeight = max(w);
-    AbsThreshold = Wgtthreshold*MaxWeight;
-    for j =1:nparticles
-        if (w(j) > AbsThreshold) 
-            keep(k) =j; %record the position of the heavy particles
-            k= k+1;
-        else
-            resamp(m)=j;
-            m= m+1;
-        end
-    end
-    disp('keep = ');
-    disp(length(keep));
-    %3/resample around heavy particles with the same weight than the assign
-    %particles. If keep is empty we are lost and make a random distribution
-    %one again
-    if k>1 % keep is not empty
-        for j=1:length(resamp)
-            x(resamp(j))=x(keep(mod(j,length(keep))+1)) + ScanLarge*rand(1,1)*transstd;
-            y(resamp(j))=y(keep(mod(j,length(keep))+1)) + ScanLarge*rand(1,1)*transstd;
-            theta(resamp(j))=theta(keep(mod(j,length(keep))+1)) + ScanTheta*rand(1,1)*orientstd;
-            w(resamp(j))=w(keep(mod(j,length(keep))+1));
-        end
-    else %(keep is empty)
-        x = unifrnd(0,MaxX,1,nparticles); 
-        y = unifrnd(10,MaxY,1,nparticles);
-        theta = unifrnd(0,2*pi,1,nparticles);
-        for m=1:nparticles
-             w(m)=1/nparticles;
-        end
-    end
+%     %1/detect the heavy and in the map particles to keep
+%     keep = zeros(0);
+%     resamp = zeros(0);
+%     k=1;
+%     m=1;
+%     %Normalize the threshold
+%     MaxWeight = max(w);
+%     AbsThreshold = Wgtthreshold*MaxWeight;
+%     for j =1:nparticles
+%         if (w(j) > AbsThreshold) 
+%             keep(k) =j; %record the position of the heavy particles
+%             k= k+1;
+%         else
+%             resamp(m)=j;
+%             m= m+1;
+%         end
+%     end
+%     disp('keep = ');
+%     disp(length(keep));
+%     %3/resample around heavy particles with the same weight than the assign
+%     %particles. If keep is empty we are lost and make a random distribution
+%     %one again
+%     if k>1 % keep is not empty
+%         for j=1:length(resamp)
+%             x(resamp(j))=x(keep(mod(j,length(keep))+1)) + ScanLarge*rand(1,1)*transstd;
+%             y(resamp(j))=y(keep(mod(j,length(keep))+1)) + ScanLarge*rand(1,1)*transstd;
+%             theta(resamp(j))=theta(keep(mod(j,length(keep))+1)) + ScanTheta*rand(1,1)*orientstd;
+%             w(resamp(j))=w(keep(mod(j,length(keep))+1));
+%         end
+%     else %(keep is empty)
+%         x = unifrnd(0,MaxX,1,nparticles); 
+%         y = unifrnd(10,MaxY,1,nparticles);
+%         theta = unifrnd(0,2*pi,1,nparticles);
+%         for m=1:nparticles
+%              w(m)=1/nparticles;
+%         end
+%     end
 
     %3/ We need to re normalise the weight
     S=sum(w);
@@ -173,12 +176,15 @@ while stop == false, % number of steps
   %-----------------------  change position  ------------------------------
   [~,MaxInd]=max(w); %MaxInd is the indice of the heaviest particle
   KnowRobot=RobotModel(x(MaxInd),y(MaxInd),theta(MaxInd));
+  newPath = Pathfinding(M, [x(MaxInd) y(MaxInd)], goal);
   %nxt.position(KnowRobot.x,KnowRobot.y,KnowRobot.theta);
   nxt.position(x(MaxInd),y(MaxInd),theta(MaxInd));
+  %route = Pathfinding(M,[x(MaxInd) y(MaxInd)],goal) 
   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
-  waitforbuttonpress; % enable to plot step by step
+  %waitforbuttonpress; % enable to plot step by step
+  clf(figure);
   hold on
   plot(M(:,1),M(:,2));  %map 
   plot(goal(1),goal(2),'*r'); %plot goal
@@ -192,15 +198,34 @@ while stop == false, % number of steps
  %%%%%%%%%%%%%%%%%%%%%%%%clear ToGo;
  %%%%%%%%%%%%%%%%%%%%%%%%ToGo = Pathfinding(M,[KnowRobot.x,KnowRobot.y],goal);
   %-----------------------  Motion  ---------------------------------------
-
-  dist = sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 );
-  if dist > step
-      xgo= (ToGo(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
-      ygo= (ToGo(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
-      [move,moveTheta] = nxt.goto(xgo,ygo);% go to the next position. move and moveTheta are used for the  particles filters
-  else
-      [move,moveTheta] = nxt.goto(ToGo(1,1),ToGo(1,2));
+  if ~isempty(newPath)
+      nextstep = newPath;
   end
+  dist = sqrt( (nextstep(1,1)-KnowRobot.x)^2 + (nextstep(1,2)-KnowRobot.y)^2 );
+%   if dist < 5
+%       stop = true;
+%   end
+  if dist > step
+      xgo= (nextstep(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
+      ygo= (nextstep(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
+      [move,moveTheta] = nxt.goto(xgo,ygo);
+  else
+      [move,moveTheta] = nxt.goto(nextstep(1,1),nextstep(1,2));
+  end
+  
+  
+%   dist = sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 );
+%   if dist < 5
+%       stop = true;
+%   end
+%   
+%   if dist > step
+%       xgo= (ToGo(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
+%       ygo= (ToGo(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
+%       [move,moveTheta] = nxt.goto(xgo,ygo);% go to the next position. move and moveTheta are used for the  particles filters
+%   else
+%       [move,moveTheta] = nxt.goto(ToGo(1,1),ToGo(1,2));
+%   end
 %------------------------ Simulated real  robot----------------------------
 
                                                                            

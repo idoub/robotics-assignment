@@ -11,6 +11,8 @@ classdef NXTRobot < handle
         theta = pi/2;
         % counter used to alternate between clockwise and counterclockwise
         count = 0;
+        % current orientation of the sensor
+        currentAngle = 0;
 		
 		% motors
 		mForward;
@@ -73,8 +75,8 @@ classdef NXTRobot < handle
 			wLeft = MOTOR_C;
 			wheels  = [wRight; wLeft];			% we want both wheels to move together
 			% default power - use different values for turning and moving in a line
-			drivePower = 60;
-			turnPower = 40;
+			drivePower = 75;
+			turnPower = 60;
 			
 			% initialise motor objects
 			% driving motors
@@ -228,29 +230,93 @@ classdef NXTRobot < handle
 			NXT.mSensor.WaitFor();
 		end
 		
-		function [out] = sense(NXT,numreadings)            
+		function [out angleError] = sense(NXT,numreadings,power)            
             angleChange = 360/numreadings;                                   % Calculate the change in angle according to the number of readings requested
             out = zeros(1,numreadings);
+            angleError = zeros(1,numreadings);
             
              % to ensure that we don't tangle the cable,
              % we alternately rotate clockwise and counterclockwise
              if NXT.count==0
-                NXT.mSensor.Power = 60;
+                NXT.mSensor.Power = -1 * power;
              else
-                NXT.mSensor.Power = -60;
+                NXT.mSensor.Power = power;
              end
              for m=1:numreadings-1                                              % For each reading
                 out(m) = NXT.senseSingle();                             		% Take a sensor measurement
-                NXT.turnSensor(angleChange);
+                %NXT.mSensor.ReadFromNXT.Position
+                angleError(m) = angleError(m) + -1 * (NXT.mSensor.ReadFromNXT.Position + NXT.currentAngle);
+                NXT.currentAngle = NXT.currentAngle + ((-1)^NXT.count * angleChange)
+                if numreadings == 4
+                    if NXT.count == 0
+                        if NXT.currentAngle == 180
+                            angleError(m+1) = -40;
+                            NXT.turnSensor(50);
+                        else if NXT.currentAngle == 270
+                                NXT.turnSensor(130);
+                            else
+                                NXT.turnSensor(angleChange);
+                            end
+                        end
+                    else
+                        if NXT.currentAngle == 180
+                            NXT.turnSensor(130);
+                        else if NXT.currentAngle == 90
+                                angleError(m+1) = -40;
+                                NXT.turnSensor(50);
+                            else
+                                NXT.turnSensor(angleChange);
+                            end
+                        end
+                    end
+                else if numreadings == 5
+                        if NXT.count == 0
+                            if NXT.currentAngle == 144
+                                angleError(m+1) = -4;
+                                NXT.turnSensor(66);
+                            else if NXT.currentAngle == 216
+                                    angleError(m+1) = 4;
+                                    NXT.turnSensor(80);
+                                else if NXT.currentAngle == 288
+                                        NXT.turnSensor(68);
+                                    else
+                                        NXT.turnSensor(angleChange);
+                                    end;
+                                end
+                            end
+                        else
+                            if NXT.currentAngle == 144
+                                angleError(m+1) = 4;
+                                NXT.turnSensor(66);
+                            else if NXT.currentAngle == 216
+                                    angleError(m+1) = -4;
+                                    NXT.turnSensor(80);
+                                else if NXT.currentAngle == 288
+                                        NXT.turnSensor(68);
+                                    else
+                                        NXT.turnSensor(angleChange);
+                                    end;
+                                end
+                            end
+                        end
+                    else
+                        NXT.turnSensor(angleChange);
+                    end
+                end
+                %NXT.turnSensor(angleChange);
              end
              % we don't actually make the last turn, to save some time
-             out(m) = NXT.senseSingle();
+             out(numreadings) = NXT.senseSingle();
+             %NXT.mSensor.ReadFromNXT.Position
+             angleError(numreadings) = -1 * (NXT.mSensor.ReadFromNXT.Position + NXT.currentAngle);
              
              % we return the results in clockwise order (0,pi/2,pi,3*pi/2)
              % so if we've rotated ccw, then shift the results
-             if NXT.count==1
+             if NXT.count==0
                  out = out(end:-1:1);
+                 angleError = angleError(end:-1:1);
              end
+             out = [out(numreadings) out(1:1:numreadings-1)];
              
              NXT.count = mod(NXT.count+1,2);
         end
@@ -258,11 +324,13 @@ classdef NXTRobot < handle
 		function reading = senseSingle(NXT)
 			% get reading and compensate for possible error
 			% readings are integers
-			reading = round(GetUltrasonic(SENSOR_4) - ( NXT.ultraErrorMean + NXT.ultraErrorStdDev.*randn(1,1)));
+			%reading = round(GetUltrasonic(SENSOR_4) - ( NXT.ultraErrorMean + NXT.ultraErrorStdDev.*randn(1,1)));
+            GetUltrasonic(SENSOR_4);
+            reading = GetUltrasonic(SENSOR_4);
             % arena size can be assumed to be limited (e.g. 120cm)
             % if measurement reading is greater than assumed limit,
             % the sensor is actually too close to the wall
-            if reading > 120
+            if reading > 200
                 reading = 4;
             end
 		end

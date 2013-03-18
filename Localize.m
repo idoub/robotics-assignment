@@ -33,6 +33,8 @@ sensorstdReal = 5%5;%real error of sensor
 %----------------------- initialisation of the particles-------------------
 xyRes = 8;
 ThetaRes = 50;
+% assume sensor rotation has no errors
+angleError = zeros(1,nbmeasure);
 
 MaxX = max(M(:,1));
 MaxY = max(M(:,2));
@@ -104,10 +106,10 @@ while stop == false, % number of steps
         %0/detect the particles out of the map
         InArena=inpolygon(x,y,M(:,1),M(:,2));
         %1/ p(z/x)* p(x)
-     
+        
     for j=1:nparticles 
         if InArena(j) == 1 % calculate weight only if the particles is in the map
-            sensorParticles = senseParticles(x(j),y(j),theta(j),M,nbmeasure);
+            sensorParticles = senseParticles(x(j),y(j),theta(j),M,nbmeasure,angleError);
             wBefore=w(j);
             w(j)=1;
             for k = 1:nbmeasure %for each measure
