@@ -4,13 +4,17 @@ function [Path] = Pathfinding(M,P1,P2)
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
 
-    visualise = 0;
+    visualise = 1;
     ROBOTWIDTH = 15;
     Graph = [];
 
     hold all
     if(visualise)
-        plot(M(:,1),M(:,2))
+        plot(M(:,1),M(:,2));
+        plot(P1(1),P1(2),'xr');
+        plot(P2(1),P2(2),'xr');
+        text(P1(1)+2,P1(2),'Start');
+        text(P2(1)+2,P2(2),'End');
     end
 
     % Define lines from points
@@ -29,32 +33,38 @@ function [Path] = Pathfinding(M,P1,P2)
         fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
     end
 
-    % Make a list of nodes for pathfinding
-    Nodes = [P1; Nav; P2];
-    for i=1:length(Nodes)
-        text(Nodes(i,1)-1,Nodes(i,2)-1,num2str(i));
-    end
-
     % Make navigation mesh
     Nav1 = circshift(Nav,1);
     NavMesh = [Nav(:,1),Nav(:,2),Nav1(:,1),Nav1(:,2)];
     
     % Check whether the start and end are within the navigation mesh or
     % outside
-    startPoint = [];
-    endPoint = [];
     [P1in, ~] = inpolygon(P1(1),P1(2),Nav(:,1),Nav(:,2));
     [P2in, ~] = inpolygon(P2(1),P2(2),Nav(:,1),Nav(:,2));
+    % If they are outside, find the closest point on the mesh and make that
+    % the first point to go to.
     if(P1in == 0)
-        %Find the closest point in the mesh
-        [startPoint, ~] = ClosestPoint(P1,NavMesh);
+        [Point1, ~] = ClosestPoint(P1,NavMesh);
+    else
+        Point1 = P1;
     end
     if(P2in == 0)
-        [endPoint, ~] = ClosestPoint(P2,NavMesh);
+        [Point2, ~] = ClosestPoint(P2,NavMesh);
+    else
+        Point2 = P2;
+    end
+
+    % Make a list of nodes for pathfinding
+    Nodes = [Point1; Nav; Point2];
+    % Show the node numbers on the figure
+    if(visualise)
+        for i=1:length(Nodes)
+            text(Nodes(i,1)-1,Nodes(i,2)-1,num2str(i));
+        end
     end
     
     % For each node find paths to every other visible node
-    for i=1:length(Nav)
+    for i=1:length(Nodes)
         % Make lines from current node to every node in map
         currentNodeRepeated = repmat(Nodes(i,:),length(Nodes(:,1)),1);
         lines = [Nodes(:,1),Nodes(:,2),currentNodeRepeated(:,1),currentNodeRepeated(:,2)];
@@ -72,6 +82,7 @@ function [Path] = Pathfinding(M,P1,P2)
                 (lines(j,4) - lines(j,2))/2 + lines(j,2)];
             [in on] = inpolygon(center(1),center(2),Nav(:,1),Nav(:,2));         % Find whether the center is actually within the navigation mesh
             cp(on)=0;                                                           % Include lines that are incident with navigation mesh edges
+            cp(cp==repmat(Nodes(i,:),length(cp(:,1)),1))=0;                     % Drop the collisioin point if the point of collision is the same as the current node
 
             if(all(cp==0))                                                      % If all elements are zero
                 if(in==1)                                                       % If the center does lie within the navigation mesh
@@ -94,7 +105,6 @@ function [Path] = Pathfinding(M,P1,P2)
     % Now just run Dijkstra's algorithm to find the optimal path
     Paths = dijkstra(Graph, Nodes, distances);
     PathIndex = [Paths{length(Paths)},length(Paths)];
-    PathIndex = PathIndex(2:end);
     Path = Nodes(PathIndex,:);
-    Path = [startPoint; Path; endPoint];
+    Path(ismember(P1,Path,'rows'),:)=[];                                        % Drop the current position from the Path if it is in there
 end
