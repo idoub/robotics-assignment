@@ -3,15 +3,9 @@ function [Path] = Pathfinding(M,P1,P2)
     %   Takes a map of type M=[X1,Y1;X2,Y2;...XN-1,YN-1], a start
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
-<<<<<<< HEAD
-%     ROBOTWIDTH = 15;
-         ROBOTWIDTH = 5; % For texting
-    Path = [];
-=======
 
     visualise = 0;
     ROBOTWIDTH = 15;
->>>>>>> 65c78f0e50ed65d7c0bfe23ecc51f326ff9a7273
     Graph = [];
 
     hold all

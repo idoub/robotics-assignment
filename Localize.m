@@ -8,7 +8,7 @@ hold on
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
 T=[80,80];
-S=[20,80];
+S=[20,20];
 step=10;
 nextstep = T;
 
@@ -23,14 +23,14 @@ transstd=0.5; % translation standard deviation in cm
 orientstd=1.5; % orientation standard deviation in degrees
 Wgtthreshold= 0.25; % relative limit to keep the particles 
 dump =0; %anti dumping coef
-ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
+ScanLarge=1; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=5e-8;
+lostthreshold=1e-8;
 %-------------------------------Sensor------------------------------------
 nbmeasure = 4; %number of measurement
-sensorstd = 20; % error of sensor for calculation
-sensorstdReal = 5;%5;%real error of sensor 
+sensorstd = 30; % error of sensor for calculation
+sensorstdReal = 0;%5;%real error of sensor 
 %----------------------- initialisation of the particles-------------------
 xyRes = 8;
 ThetaRes = 50;
@@ -111,12 +111,24 @@ lost = true; % Just to enter the loop
       nextstep = newPath;
   end
   dist = sqrt( (nextstep(1,1)-KnowRobot.x)^2 + (nextstep(1,2)-KnowRobot.y)^2 );
-  if dist > step
+  if dist > step % we detect if the robot is near a node of the pathfinding
       xgo= (nextstep(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
       ygo= (nextstep(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
       [move,moveTheta] = goto(KnowRobot,xgo,ygo);
   else
-      [move,moveTheta] = goto(KnowRobot,nextstep(1,1),nextstep(1,2));
+      %recor old position to calculate move and move theta for the prt filter
+      x_old=KnowRobot.x;
+      y_old=KnowRobot.y;
+      goto(KnowRobot,nextstep(1,1),nextstep(1,2)); 
+      newPath = Pathfinding(M, [x(MaxInd) y(MaxInd)], T);
+        if ~isempty(newPath)
+            nextstep = newPath;
+        end
+      xgo= (nextstep(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
+      ygo= (nextstep(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
+      goto(KnowRobot,nextstep(1,1),nextstep(1,2));
+      move = sqrt((KnowRobot.x - x_old)^2 +(KnowRobot.y - y_old)^2 );
+      moveTheta = atan((KnowRobot.y - y_old)/(KnowRobot.x - x_old))
   end
   
 

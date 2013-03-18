@@ -6,18 +6,19 @@ hold on
 
 %-------------------------Map definition-----------------------------------
 
-M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[80,80];
-S=[20,80];
-step=10;
-nextstep = T;
+M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105];
+goal=[30,80];
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
-RealRobot=RobotModel(S(1),S(2), 0);%robot use for simulating captor
-         plot(RealRobot.x,RealRobot.y,'or');
+%RealRobot=RobotModel(80,80, 13 *pi/180);%robot use for simulating captor
+%         plot(RealRobot.x,RealRobot.y,'or');
 KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding
-%                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
+                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
+                
+nxt = NXTRobot(80,80,pi);
+nxt.initAll();
+
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
 orientstd=1.5; % orientation standard deviation in degrees
@@ -34,25 +35,27 @@ sensorstdReal = 5;%5;%real error of sensor
 %----------------------- initialisation of the particles-------------------
 xyRes = 8;
 ThetaRes = 50;
+
 clear x
 clear y 
 clear theta
 [x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M);
 plot(x,y,'+')
 
+
+ 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% END INITIALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 move=0;
 moveTheta=0;
 stop = false;
 while stop == false, % number of steps
     
     %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lost = true; % Just to enter the loop
-    while (lost == true)
+
+    %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ while (lost == true)
         %-----Reading Robot sensor----------
-        sensorRobot =sense(RealRobot,M,nbmeasure); % distance from 0 to a fictional wall + error
+        sensorRobot = nxt.sense(nbmeasure)
         for h=1:nbmeasure
             sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
         end
@@ -82,68 +85,39 @@ lost = true; % Just to enter the loop
     end
    
 
-
  %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT MOVE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %-----------------------  change position  ------------------------------
   [~,MaxInd]=max(w); %MaxInd is the indice of the heaviest particle
   KnowRobot=RobotModel(x(MaxInd),y(MaxInd),theta(MaxInd));
-  newPath = Pathfinding(M, [x(MaxInd) y(MaxInd)], T);
+  %nxt.position(KnowRobot.x,KnowRobot.y,KnowRobot.theta);
+  nxt.position(x(MaxInd),y(MaxInd),theta(MaxInd));
   
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
   waitforbuttonpress; % enable to plot step by step
   hold on
   plot(M(:,1),M(:,2));  %map 
-  plot(T(1),T(2),'*r'); %plot goal
+  plot(goal(1),goal(2),'*r'); %plot goal
   plot(x,y,'b+');       %particles
   plot(KnowRobot.x,KnowRobot.y,'xr');   %know position of the robot  
-  plot(RealRobot.x,RealRobot.y,'or');   %True position 
-  perc =  acuracy(x,y,KnowRobot.x,KnowRobot.y,nparticles,5);
-
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
+  %plot(RealRobot.x,RealRobot.y,'or');   %True position 
+ 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
     
   %-----------------------  Path finding  ---------------------------------
  %%%%%%%%%%%%%%%%%%%%%%%%clear ToGo;
  %%%%%%%%%%%%%%%%%%%%%%%%ToGo = Pathfinding(M,[KnowRobot.x,KnowRobot.y],goal);
   %-----------------------  Motion  ---------------------------------------
-  
-  if ~isempty(newPath)
-      nextstep = newPath;
-  end
-  dist = sqrt( (nextstep(1,1)-KnowRobot.x)^2 + (nextstep(1,2)-KnowRobot.y)^2 );
-  if dist > step % we detect if the robot is near a node of the pathfinding
-      xgo= (nextstep(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
-      ygo= (nextstep(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
-      [move,moveTheta] = goto(KnowRobot,xgo,ygo);
-  else
-      %recor old position to calculate move and move theta for the prt filter
-      x_old=KnowRobot.x;
-      y_old=KnowRobot.y;
-      goto(KnowRobot,nextstep(1,1),nextstep(1,2)); 
-      xgo= (nextstep(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
-      ygo= (nextstep(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
-      newPath = Pathfinding(M, [x(MaxInd) y(MaxInd)], T);
-        if ~isempty(newPath)
-            nextstep = newPath;
-        end
-      goto(KnowRobot,nextstep(1,1),nextstep(1,2));
-      move = sqrt((KnowRobot.x - x_old)^2 +(KnowRobot.y - y_old)^2 );
-      moveTheta = atan((KnowRobot.y - y_old)/(KnowRobot.x - x_old))
-  end
-  
 
-  %dist= sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 )  
-  %if dist > step
-  %    xgo= (ToGo(1,1)-KnowRobot.x)*step/dist + KnowRobot.x
-  %    ygo= (ToGo(1,2)-KnowRobot.y)*step/dist + KnowRobot.y
-  %    [move,moveTheta] = goto(KnowRobot,xgo,ygo)% go to the next position. move and moveTheta are used for the  particles filters
-  %else
-  %    [move,moveTheta] = goto(KnowRobot,ToGo(1,1),ToGo(1,2));
-  %end
+  dist = sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 );
+  if dist > step
+      xgo= (ToGo(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
+      ygo= (ToGo(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
+      [move,moveTheta] = nxt.goto(xgo,ygo);% go to the next position. move and moveTheta are used for the  particles filters
+  else
+      [move,moveTheta] = nxt.goto(ToGo(1,1),ToGo(1,2));
+  end
 %------------------------ Simulated real  robot----------------------------
-left(RealRobot,moveTheta);
-forward(RealRobot,move);
-     
 % Evaluate if we are arrive
 per = Circle_probabilie(T(1),T(2),4,x,y,w)
 if per > 0.8
