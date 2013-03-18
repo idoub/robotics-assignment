@@ -4,12 +4,14 @@ function [Path] = Pathfinding(M,P1,P2)
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
 
+    visualise = 0;
     ROBOTWIDTH = 15;
-    Path = [];
     Graph = [];
 
     hold all
-    plot(M(:,1),M(:,2))
+    if(visualise)
+        plot(M(:,1),M(:,2))
+    end
 
     % Define lines from points
     M1 = circshift(M,1);
@@ -23,7 +25,9 @@ function [Path] = Pathfinding(M,P1,P2)
     % area
     N1 = circshift(Normals,-1);
     Nav = M + Normals + N1;
-    fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
+    if(visualise)
+        fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
+    end
 
     % Make a list of nodes for pathfinding
     Nodes = [P1; Nav; P2];
@@ -74,7 +78,9 @@ function [Path] = Pathfinding(M,P1,P2)
                     lineReverse = [lines(j,3:4),lines(j,1:2)];                  % Reverse the line
                     if(~ismember(lineReverse,Graph,'rows'))                     % If the reverse isn't already included in the graph
                         Graph = [Graph; lines(j,:)];                            % Add this line to the graph
-                        plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                        if(visualise)
+                            plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                        end
                     end
                 end
             end
