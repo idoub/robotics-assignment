@@ -22,12 +22,15 @@ classdef NXTRobot < handle
 		mSensor;
 	
 		% motor properties
-		cmToTacho = 25.714;				% how many times does the motor have to turn to move 1cm forward?
+        wheelCirc = 14;                     % circumference of tyre
+        wheelRadius = 15.35/2;                  % radius of wheel base in cm
+        
+		cmToTacho = 25.714;                 % how many times does the motor have to turn to move 1cm forward?
 		radToTacho = 411.383;				% how many times does the motor have to turn to rotate the robot by one radian?
 		
 		% sensor properties
-		ultraErrorMean = 0;			% mean of ultrasonic sensor error distribution
-		ultraErrorStdDev = 1.095;		% standard deviation of ultrasonic sensor error distribution
+		ultraErrorMean = 0;                 % mean of ultrasonic sensor error distribution
+		ultraErrorStdDev = 1.095;           % standard deviation of ultrasonic sensor error distribution
     end
 	
 	methods
@@ -36,6 +39,11 @@ classdef NXTRobot < handle
             NXT.x = x;
             NXT.y = y;
             NXT.theta = theta;
+            
+            % turning the motor 360deg should make the wheel travel 14cm
+            NXT.cmToTacho = 360/NXT.wheelCirc;
+            % when turning one radian, one wheel travels 2*wheelRadius cm
+            NXT.radToTacho = 2 * NXT.wheelRadius * NXT.cmToTacho;
         end
 		
         % SETUP
@@ -109,20 +117,27 @@ classdef NXTRobot < handle
 			initSensors(NXT, 0, 1.5);
         end
         
+        % POSITION
+        function position(NXT,newX,newY,newTheta)
+            NXT.x = newX;
+            NXT.y = newY;
+            NXT.theta = newTheta;
+        end
+        
 		% MOVEMENT
         % general movement function
-        function goto(NXT,newX,newY)
+        function [dist rotate] = goto(NXT,newX,newY)
             % distance to travel (stright line)
-            dist = sqrt((newX-NXT.x)^2 + (newY-NXT.y)^2)
+            dist = sqrt((newX-NXT.x)^2 + (newY-NXT.y)^2);
             % angle to turn
-            newAngle = atan2((newY-NXT.y),(newX-NXT.x))
-            rotate = newAngle - NXT.theta
+            newAngle = atan2((newY-NXT.y),(newX-NXT.x));
+            rotate = newAngle - NXT.theta;
             % Keep the values of rotate between pi and -pi
             if rotate < -pi
-                rotate = (2*pi) + rotate
+                rotate = (2*pi) + rotate;
             end
             if rotate > pi
-                rotate = rotate - (2*pi)
+                rotate = rotate - (2*pi);
             end
             % turn to either the left or the right
             % using standard trigonometric orientation
@@ -139,7 +154,7 @@ classdef NXTRobot < handle
             % update position
             NXT.x = newX;
             NXT.y = newY;
-            NXT.theta = newAngle;            
+            NXT.theta = newAngle; 
         end
         
 		% move forward
@@ -165,6 +180,8 @@ classdef NXTRobot < handle
 			% set tacho based on angle of rotation
 			NXT.mLeft1.TachoLimit = round(angle * NXT.radToTacho * 0.5);
             NXT.mLeft2.TachoLimit = NXT.mLeft1.TachoLimit;
+            % tacho correction -> compensate for right wheel bias
+            NXT.mLeft2.TachoLimit = round(0.98 * NXT.mLeft2.TachoLimit);
 			% NXT.mLeft1.Power = -80;
 			% NXT.mLeft2.Power = 80;
 			NXT.mLeft1.SendToNXT();
@@ -173,14 +190,16 @@ classdef NXTRobot < handle
             NXT.mLeft1.WaitFor();
         end
         function turnLeftOnly(NXT, angle)
-                NXT.mLeft1.TachoLimit = angle * NXT.radToTacho;
-                NXT.mLeft1.SendToNXT();
-                NXT.mLeft1.WaitFor();
+            NXT.mLeft1.TachoLimit = angle * NXT.radToTacho;
+            NXT.mLeft1.SendToNXT();
+            NXT.mLeft1.WaitFor();
         end
 		function turnRight(NXT, angle)
 			% set tacho based on angle of rotation
 			NXT.mRight1.TachoLimit = round(angle * NXT.radToTacho * 0.5);
             NXT.mRight2.TachoLimit = NXT.mRight1.TachoLimit;
+            % tacho correction -> compensate for right wheel bias
+            NXT.mRight1.TachoLimit = round(0.98 * NXT.mRight1.TachoLimit);
 			% NXT.mRight1.Power = -50;
 			% NXT.mRight2.Power = 50;
 			NXT.mRight1.SendToNXT();
@@ -220,15 +239,17 @@ classdef NXTRobot < handle
              else
                 NXT.mSensor.Power = -60;
              end
-             for m=1:numreadings                                                % For each reading
+             for m=1:numreadings-1                                              % For each reading
                 out(m) = NXT.senseSingle();                             		% Take a sensor measurement
                 NXT.turnSensor(angleChange);
              end
+             % we don't actually make the last turn, to save some time
+             out(m) = NXT.senseSingle();
              
              % we return the results in clockwise order (0,pi/2,pi,3*pi/2)
              % so if we've rotated ccw, then shift the results
              if NXT.count==1
-                 out = [out(1) out(end:-1:2)];
+                 out = out(end:-1:1);
              end
              
              NXT.count = mod(NXT.count+1,2);
@@ -238,7 +259,12 @@ classdef NXTRobot < handle
 			% get reading and compensate for possible error
 			% readings are integers
 			reading = round(GetUltrasonic(SENSOR_4) - ( NXT.ultraErrorMean + NXT.ultraErrorStdDev.*randn(1,1)));
-            % reading = GetUltrasonic(SENSOR_4);
+            % arena size can be assumed to be limited (e.g. 120cm)
+            % if measurement reading is greater than assumed limit,
+            % the sensor is actually too close to the wall
+            if reading > 120
+                reading = 4;
+            end
 		end
 		
 	end
