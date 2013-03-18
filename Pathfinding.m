@@ -3,13 +3,21 @@ function [Path] = Pathfinding(M,P1,P2)
     %   Takes a map of type M=[X1,Y1;X2,Y2;...XN-1,YN-1], a start
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
+<<<<<<< HEAD
 %     ROBOTWIDTH = 15;
          ROBOTWIDTH = 5; % For texting
     Path = [];
+=======
+
+    visualise = 0;
+    ROBOTWIDTH = 15;
+>>>>>>> 65c78f0e50ed65d7c0bfe23ecc51f326ff9a7273
     Graph = [];
 
     hold all
-    %plot(M(:,1),M(:,2))
+    if(visualise)
+        plot(M(:,1),M(:,2))
+    end
 
     % Define lines from points
     M1 = circshift(M,1);
@@ -23,7 +31,9 @@ function [Path] = Pathfinding(M,P1,P2)
     % area
     N1 = circshift(Normals,-1);
     Nav = M + Normals + N1;
-    %fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
+    if(visualise)
+        fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
+    end
 
     % Make a list of nodes for pathfinding
     Nodes = [P1; Nav; P2];
@@ -34,6 +44,20 @@ function [Path] = Pathfinding(M,P1,P2)
     % Make navigation mesh
     Nav1 = circshift(Nav,1);
     NavMesh = [Nav(:,1),Nav(:,2),Nav1(:,1),Nav1(:,2)];
+    
+    % Check whether the start and end are within the navigation mesh or
+    % outside
+    startPoint = [];
+    endPoint = [];
+    [P1in, ~] = inpolygon(P1(1),P1(2),Nav(:,1),Nav(:,2));
+    [P2in, ~] = inpolygon(P2(1),P2(2),Nav(:,1),Nav(:,2));
+    if(P1in == 0)
+        %Find the closest point in the mesh
+        [startPoint, ~] = ClosestPoint(P1,NavMesh);
+    end
+    if(P2in == 0)
+        [endPoint, ~] = ClosestPoint(P2,NavMesh);
+    end
     
     % For each node find paths to every other visible node
     for i=1:length(Nav)
@@ -60,7 +84,9 @@ function [Path] = Pathfinding(M,P1,P2)
                     lineReverse = [lines(j,3:4),lines(j,1:2)];                  % Reverse the line
                     if(~ismember(lineReverse,Graph,'rows'))                     % If the reverse isn't already included in the graph
                         Graph = [Graph; lines(j,:)];                            % Add this line to the graph
-                        %plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                        if(visualise)
+                            plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
+                        end
                     end
                 end
             end
@@ -76,5 +102,5 @@ function [Path] = Pathfinding(M,P1,P2)
     PathIndex = [Paths{length(Paths)},length(Paths)];
     PathIndex = PathIndex(2:end);
     Path = Nodes(PathIndex,:);
-
+    Path = [startPoint; Path; endPoint];
 end
