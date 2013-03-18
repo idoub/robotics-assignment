@@ -8,8 +8,8 @@ Resamp=floor(nb*Resamp/sum(Resamp));
 
 %make a matrix to link each particle x,y,theta,wgt
 clear Mat;
-Mat=[w;x;y;theta]'
-Smat=sortrows(Mat,1)
+Mat=[w;x;y;theta]';
+Smat=sortrows(Mat,1);
 MaxWeight = Smat(1,1);
 AbsThreshold = Wgtthreshold*MaxWeight;
 I=find(Smat(:,1)>AbsThreshold,1 );
@@ -36,7 +36,11 @@ end
 xout=Smat(:,2)';
 yout=Smat(:,3)';
 thetaout=Smat(:,4)';
-wout=Smat(:,1)';
+w1=Smat(:,1)';
+
+%Resample
+        S=sum(w1);
+wout=w1/S;
 end
 
 
