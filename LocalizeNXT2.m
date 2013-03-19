@@ -7,7 +7,7 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[80,80];
+T=[20,80];
 S=[20,20];
 step=10;
 %nextstep = T;
@@ -31,7 +31,7 @@ ScanTheta=0.5; % how far the resample particle are randomly distributed aroud he
 dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
 lostthreshold=0;
 %-------------------------------Sensor------------------------------------
-nbmeasure = 5; %number of measurement
+nbmeasure = 4; %number of measurement
 sensorstd = 30; % error of sensor for calculation
 sensorstdReal = 0;%5;%real error of sensor 
 %----------------------- initialisation of the particles-------------------
@@ -61,6 +61,7 @@ while stop == false, % number of steps
    while (lost == true)
         %-----Reading Robot sensor----------
         [sensorRobot angleError] = nxt.sense(nbmeasure,60)
+%         angleError=zeros(nbmeasure,1)
 %         for h=1:nbmeasure
 %             sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
 %         end

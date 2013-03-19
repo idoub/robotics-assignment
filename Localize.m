@@ -7,8 +7,8 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[80,80];
-S=[20,60];
+T=[20,80];
+S=[20,50];
 step=10;
 nextstep = T;
 
@@ -25,7 +25,7 @@ Wgtthreshold= 0.25; % relative limit to keep the particles
 dump =0; %anti dumping coef
 ScanLarge=1; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
-dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
+dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
 lostthreshold=0;
 %-------------------------------Sensor------------------------------------
 nbmeasure = 4; %number of measurement
@@ -109,9 +109,11 @@ while stop == false, % number of steps
   if ~isempty(newPath)
       nextstep = newPath(1,:);
   end
-  
+  xold=KnowRobot.x;
+  yold=KnowRobot.y;
  dist = sqrt( (nextstep(1)-KnowRobot.x)^2 + (nextstep(2)-KnowRobot.y)^2 );
   if dist > step % we detect if the robot is near a node of the pathfinding
+      disp('flag')
       xgo= (nextstep(1)-KnowRobot.x)*step/dist + KnowRobot.x;
       ygo= (nextstep(2)-KnowRobot.y)*step/dist + KnowRobot.y;
       [move,moveTheta] = goto(KnowRobot,xgo,ygo);
@@ -141,7 +143,7 @@ left(RealRobot,moveTheta);
 forward(RealRobot,move);
      
 % Evaluate if we are arrive
-per = Circle_probabilie(T(1),T(2),4,x,y,w);
+per = Circle_probabilie(T(1),T(2),4,y,w);
 if per > 0.8
     stop = true
 end

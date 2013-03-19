@@ -156,7 +156,8 @@ classdef NXTRobot < handle
             % update position
             NXT.x = newX;
             NXT.y = newY;
-            NXT.theta = newAngle; 
+            NXT.theta = newAngle;
+            rotate * 180 / pi
         end
         
 		% move forward
@@ -251,19 +252,19 @@ classdef NXTRobot < handle
                     if NXT.count == 0
                         if NXT.currentAngle == 180
                             %angleError(m+1) = -40;
-                            NXT.turnSensor(50);
+                            NXT.turnSensor(40);
                         else if NXT.currentAngle == 270
-                                NXT.turnSensor(130);
+                                NXT.turnSensor(140);
                             else
                                 NXT.turnSensor(angleChange);
                             end
                         end
                     else
                         if NXT.currentAngle == 180
-                            NXT.turnSensor(130);
+                            NXT.turnSensor(140);
                         else if NXT.currentAngle == 90
                                 %angleError(m+1) = -40;
-                                NXT.turnSensor(50);
+                                NXT.turnSensor(40);
                             else
                                 NXT.turnSensor(angleChange);
                             end
