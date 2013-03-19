@@ -4,8 +4,9 @@ function [Path] = Pathfinding(M,P1,P2)
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
 
-    visualise = 1;
+    visualise = 0;
     ROBOTWIDTH = 15;
+    MINDIST = 2;
     Graph = [];
 
     hold all
@@ -103,8 +104,10 @@ function [Path] = Pathfinding(M,P1,P2)
     distances = sqrt((Graph(:,1)-Graph(:,3)).^2 + (Graph(:,2)-Graph(:,4)).^2);  % Calculate distances of all lines in graph
     
     % Now just run Dijkstra's algorithm to find the optimal path
-    Paths = dijkstra(Graph, Nodes, distances);
+    [Paths, NodeDistances] = dijkstra(Graph, Nodes, distances);
     PathIndex = [Paths{length(Paths)},length(Paths)];
     Path = Nodes(PathIndex,:);
-    Path(ismember(P1,Path,'rows'),:)=[];                                        % Drop the current position from the Path if it is in there
+    NDist = NodeDistances(PathIndex);
+    Path = [Path,NDist];
+    Path(NDist < MINDIST,:)=[];                                                 % Drop any node that has a distance less than MINDIST
 end

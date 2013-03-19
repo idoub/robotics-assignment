@@ -1,4 +1,4 @@
-function [x,y,theta,w,nb] = Normal_sample(xyRes, ThetaRes,M)
+function [x,y,w,theta,nb] = Normal_sample(xyRes, ThetaRes,M)
 %resample the particle on all the map with the resolution xyRez in space 
 %and thetaRes in angle. nb is the number of particles
 MaxX = max(M(:,1));

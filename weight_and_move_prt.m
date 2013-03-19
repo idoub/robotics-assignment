@@ -1,4 +1,4 @@
-function [x,y,theta,w] = move_and_weight_prt(x,y,theta,w,M,nparticles,transstd,orientstd,nbmeasure,sensorstd,move,moveTheta,sensorRobot,dump)
+function [x,y,theta,w] = move_and_weight_prt(x,y,theta,w,M,nparticles,transstd,orientstd,nbmeasure,sensorstd,move,moveTheta,sensorRobot,dump,angleError)
 for j=1:nparticles %repet times number of particles
         
         %-------------------------- Move particles ------------------------
@@ -17,7 +17,7 @@ for j=1:nparticles %repet times number of particles
      
     for j=1:nparticles 
         if InArena(j) == 1 % calculate weight only if the particles is in the map
-            sensorParticles = senseParticles(x(j),y(j),theta(j),M,nbmeasure);
+            sensorParticles = senseParticles(x(j),y(j),theta(j),M,nbmeasure,angleError);
             wBefore=w(j);
             w(j)=1;
             for k = 1:nbmeasure %for each measure

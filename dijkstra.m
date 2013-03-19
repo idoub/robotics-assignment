@@ -1,4 +1,4 @@
-function [ Paths ] = dijkstra( Graph, Nodes, Dist )
+function [ Paths, NodeDistances ] = dijkstra( Graph, Nodes, Dist )
 %DIJKSTRA Runs Dijkstra's algorithm
 %
 %   This function runs Dijkstra's algorithm provided a Graph, a list of
