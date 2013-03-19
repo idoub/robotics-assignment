@@ -6,7 +6,7 @@ nb =length(x);
 per=0;
 for i =1:nb
     if ( (x(i)-xc)^2 +(y(i)-yc)^2  < r^2)
-    per=per + w(i)
+    per=per + w(i);
     end
 end
 percent =per;

@@ -8,7 +8,7 @@ hold on
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
 T=[80,80];
-S=[20,20];
+S=[60,80];
 step=10;
 nextstep = T;
 
@@ -26,7 +26,7 @@ dump =0; %anti dumping coef
 ScanLarge=1; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=1e-8;
+lostthreshold=0;
 %-------------------------------Sensor------------------------------------
 nbmeasure = 4; %number of measurement
 sensorstd = 30; % error of sensor for calculation
@@ -49,16 +49,16 @@ stop = false;
 while stop == false, % number of steps
     
     %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lost = true; % Just to enter the loop
+    lost = true; % Just to enter the loop
     while (lost == true)
         %-----Reading Robot sensor----------
-        sensorRobot =sense(RealRobot,M,nbmeasure); % distance from 0 to a fictional wall + error
+        sensorRobot = sense(RealRobot,M,nbmeasure) % distance from 0 to a fictional wall + error
         for h=1:nbmeasure
             sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        [x,y,theta,w] = weight_and_move_prt(x,y,theta,w,M,nparticles,transstd,orientstd,nbmeasure,sensorstd,move,moveTheta,sensorRobot,dump);
+        angleError=zeros(nbmeasure,1);
+        [x,y,theta,w] = weight_and_move_prt(x,y,theta,w,M,nparticles,transstd,orientstd,nbmeasure,sensorstd,move,moveTheta,sensorRobot,dump,angleError);
         Maxweight= max(w);
         %------------------------- Normalisation of particles -----------------
             S=sum(w);
@@ -88,7 +88,6 @@ lost = true; % Just to enter the loop
   [~,MaxInd]=max(w); %MaxInd is the indice of the heaviest particle
   KnowRobot=RobotModel(x(MaxInd),y(MaxInd),theta(MaxInd));
   newPath = Pathfinding(M, [x(MaxInd) y(MaxInd)], T);
-  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
   waitforbuttonpress; % enable to plot step by step
@@ -108,28 +107,24 @@ lost = true; % Just to enter the loop
   %-----------------------  Motion  ---------------------------------------
   
   if ~isempty(newPath)
-      nextstep = newPath;
+      nextstep = newPath(1,:)
   end
-  dist = sqrt( (nextstep(1,1)-KnowRobot.x)^2 + (nextstep(1,2)-KnowRobot.y)^2 );
+ 
+ dist = sqrt( (nextstep(1)-KnowRobot.x)^2 + (nextstep(2)-KnowRobot.y)^2 )
+ while
   if dist > step % we detect if the robot is near a node of the pathfinding
-      xgo= (nextstep(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
-      ygo= (nextstep(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
-      [move,moveTheta] = goto(KnowRobot,xgo,ygo);
+      xgo= (nextstep(1)-KnowRobot.x)*step/dist + KnowRobot.x
+      ygo= (nextstep(2)-KnowRobot.y)*step/dist + KnowRobot.y
+      [move,moveTheta] = goto(KnowRobot,xgo,ygo)
   else
-      %recor old position to calculate move and move theta for the prt filter
-      x_old=KnowRobot.x;
-      y_old=KnowRobot.y;
-      goto(KnowRobot,nextstep(1,1),nextstep(1,2)); 
-      newPath = Pathfinding(M, [x(MaxInd) y(MaxInd)], T);
-        if ~isempty(newPath)
-            nextstep = newPath;
-        end
-      xgo= (nextstep(1,1)-KnowRobot.x)*step/dist + KnowRobot.x;
-      ygo= (nextstep(1,2)-KnowRobot.y)*step/dist + KnowRobot.y;
-      goto(KnowRobot,nextstep(1,1),nextstep(1,2));
-      move = sqrt((KnowRobot.x - x_old)^2 +(KnowRobot.y - y_old)^2 );
-      moveTheta = atan((KnowRobot.y - y_old)/(KnowRobot.x - x_old))
+      disp('else')
+      xgo= nextstep(1);
+      ygo= nextstep(2);
+      [move,moveTheta] = goto(KnowRobot,xgo,ygo)
+
+
   end
+
   
 
   %dist= sqrt( (ToGo(1,1)-KnowRobot.x)^2 + (ToGo(1,2)-KnowRobot.y)^2 )  

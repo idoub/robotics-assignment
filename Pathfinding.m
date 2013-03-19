@@ -4,7 +4,7 @@ function [Path] = Pathfinding(M,P1,P2)
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
 
-    visualise = 1;
+    visualise = 0;
     ROBOTWIDTH = 15;
     Graph = [];
 
