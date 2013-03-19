@@ -36,7 +36,11 @@ end
 xout=Smat(:,2)';
 yout=Smat(:,3)';
 thetaout=Smat(:,4)';
-wout=Smat(:,1)';
+w1=Smat(:,1)';
+
+%Resample
+        S=sum(w1);
+wout=w1/S;
 end
 
 
