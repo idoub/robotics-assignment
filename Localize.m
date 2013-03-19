@@ -8,7 +8,7 @@ hold on
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
 T=[80,80];
-S=[60,80];
+S=[20,60];
 step=10;
 nextstep = T;
 
@@ -20,7 +20,7 @@ KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding
 %                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
-orientstd=1.5; % orientation standard deviation in degrees
+orientstd=0.5; % orientation standard deviation in degrees
 Wgtthreshold= 0.25; % relative limit to keep the particles 
 dump =0; %anti dumping coef
 ScanLarge=1; % how far the resample particle are randomly distributed aroud heavy solution in space
@@ -52,7 +52,7 @@ while stop == false, % number of steps
     lost = true; % Just to enter the loop
     while (lost == true)
         %-----Reading Robot sensor----------
-        sensorRobot = sense(RealRobot,M,nbmeasure) % distance from 0 to a fictional wall + error
+        sensorRobot = sense(RealRobot,M,nbmeasure); % distance from 0 to a fictional wall + error
         for h=1:nbmeasure
             sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
         end
@@ -99,7 +99,7 @@ while stop == false, % number of steps
   plot(RealRobot.x,RealRobot.y,'or');   %True position 
   perc =  acuracy(x,y,KnowRobot.x,KnowRobot.y,nparticles,5);
 
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% xgoEND PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
     
   %-----------------------  Path finding  ---------------------------------
  %%%%%%%%%%%%%%%%%%%%%%%%clear ToGo;
@@ -107,22 +107,23 @@ while stop == false, % number of steps
   %-----------------------  Motion  ---------------------------------------
   
   if ~isempty(newPath)
-      nextstep = newPath(1,:)
+      nextstep = newPath(1,:);
   end
- 
- dist = sqrt( (nextstep(1)-KnowRobot.x)^2 + (nextstep(2)-KnowRobot.y)^2 )
- while
+  
+ dist = sqrt( (nextstep(1)-KnowRobot.x)^2 + (nextstep(2)-KnowRobot.y)^2 );
   if dist > step % we detect if the robot is near a node of the pathfinding
-      xgo= (nextstep(1)-KnowRobot.x)*step/dist + KnowRobot.x
-      ygo= (nextstep(2)-KnowRobot.y)*step/dist + KnowRobot.y
-      [move,moveTheta] = goto(KnowRobot,xgo,ygo)
+      xgo= (nextstep(1)-KnowRobot.x)*step/dist + KnowRobot.x;
+      ygo= (nextstep(2)-KnowRobot.y)*step/dist + KnowRobot.y;
+      [move,moveTheta] = goto(KnowRobot,xgo,ygo);
+            plot(KnowRobot.x,KnowRobot.y,'sr');
   else
-      disp('else')
+ 
       xgo= nextstep(1);
       ygo= nextstep(2);
-      [move,moveTheta] = goto(KnowRobot,xgo,ygo)
+      [move,moveTheta] = goto(KnowRobot,xgo,ygo);
+      plot(KnowRobot.x,KnowRobot.y,'sr');
 
-
+  
   end
 
   
@@ -140,7 +141,7 @@ left(RealRobot,moveTheta);
 forward(RealRobot,move);
      
 % Evaluate if we are arrive
-per = Circle_probabilie(T(1),T(2),4,x,y,w)
+per = Circle_probabilie(T(1),T(2),4,x,y,w);
 if per > 0.8
     stop = true
 end

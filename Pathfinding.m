@@ -4,7 +4,7 @@ function [Path] = Pathfinding(M,P1,P2)
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
 
-    visualise = 1;
+    visualise = 0;
     ROBOTWIDTH = 15;
     MINDIST = 2;
     Graph = [];
@@ -108,5 +108,6 @@ function [Path] = Pathfinding(M,P1,P2)
     PathIndex = [Paths{length(Paths)},length(Paths)];
     Path = Nodes(PathIndex,:);
     NDist = NodeDistances(PathIndex);
+    Path = [Path,NDist];
     Path(NDist < MINDIST,:)=[];                                                 % Drop any node that has a distance less than MINDIST
 end
