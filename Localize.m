@@ -1,4 +1,4 @@
-clear all
+%clear all
 figure(10)
 hold on
 %%%%%%%%%%%%%%%%%%%%%%%%%% INITIALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,14 +7,14 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[20,20];
+T=[23,27.5];
 S=[80,80];
 step=10;
 nextstep = T;
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
-RealRobot=RobotModel(S(1),S(2),0.5);%robot use for simulating captor
+RealRobot=RobotModel(S(1),S(2),0);%robot use for simulating captor
          plot(RealRobot.x,RealRobot.y,'or');
 AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
 %                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
@@ -22,7 +22,7 @@ AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
 transstd=0.5; % translation standard deviation in cm
 orientstd=0.5; % orientation standard deviation in degrees
 Wgtthreshold= 0.10; % relative limit to keep the particles 
-dump =0; %anti dumping coef
+dump =0; %anti dumping coef 0 => no anti dumping ; 1=> dumping
 ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.8; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)

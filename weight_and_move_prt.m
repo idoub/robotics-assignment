@@ -23,7 +23,7 @@ for j=1:nparticles %repet times number of particles
             for k = 1:nbmeasure %for each measure
                  w(j)= 1/sqrt(2*pi*sensorstd^2) * exp(- (sensorParticles(k) - sensorRobot(k))^2 /(2*sensorstd^2) ) * w(j) + dump;
             end
-            w(j)=wBefore*w(j);
+            w(j)=wBefore*w(j)*(1-dump) + wBefore*dump;
         else
             w(j) =0;
         end
