@@ -49,6 +49,9 @@ classdef RobotModel < handle
             if RM.theta < -pi                                                   % If the angle is less than minus pi (i.e. passed beyond the negative x direction)
                 RM.theta = (2*pi) + RM.theta;                                   % Add to 2pi
             end
+            if RM.theta > pi                                                   % If the angle is less than minus pi (i.e. passed beyond the negative x direction)
+                RM.theta = (2*pi) - RM.theta;                                   % Add to 2pi
+            end
         end
 
         function rightd(RM,degrees)
@@ -59,6 +62,9 @@ classdef RobotModel < handle
             RM.theta = RM.theta + deg;                                          % Add the dgrees of rotation
             if RM.theta > pi                                                    % If the angle is now more than pi
                 RM.theta = RM.theta - (2*pi);                                   % Subtract 2pi
+            end
+            if RM.theta < -pi                                                   % If the angle is less than minus pi (i.e. passed beyond the negative x direction)
+                RM.theta = (2*pi) + RM.theta;                                   % Add to 2pi
             end
         end
 

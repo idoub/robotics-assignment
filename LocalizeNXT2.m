@@ -24,14 +24,14 @@ nxt.initAll();
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
 orientstd=0.5; % orientation standard deviation in degrees
-Wgtthreshold= 0.05; % relative limit to keep the particles 
+Wgtthreshold= 0.10% relative limit to keep the particles 
 dump =0; %anti dumping coef
 ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.8; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=10e-8;
+lostthreshold=0% 2e-8;   % the more high it is the easier it is to get lost
 %-------------------------------Sensor------------------------------------
-nbmeasure = 4; %number of measurement
+nbmeasure = 5; %number of measurement
 sensorstd = 3; % error of sensor for calculation
 sensorstdReal = 0;%5;%real error of sensor 
 %----------------------- initialisation of the particles-------------------
@@ -52,6 +52,7 @@ while stop == false, % number of steps
   
    %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    lost = true; % enter the loop
+   lost1 = false;
    while (lost == true)
         %-----Reading Robot sensor----------
         [sensorRobot angleError] = nxt.sense(nbmeasure,60)
@@ -71,16 +72,22 @@ while stop == false, % number of steps
             clear y 
             clear theta
             clear w
-           [x,y,theta,w,nparticles] = Normal_sample(xyRes, ThetaRes,M);
+           [x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M)
             clf(figure)
             plot(x,y,'+')
             disp('lost');
+           if lost1 == true %anti stuck in lost place
+               lost=false
+           end
+           lost1=true
         else
             lost = false;
              %------------------------- Resampling ---------------------------------
             [x,y,theta,w ]=resample(Wgtthreshold,x,y,theta,w,ScanTheta*orientstd,ScanLarge*transstd,dist);
             disp('notlost')
+
         end
+        
     end
    
 
@@ -99,8 +106,7 @@ while stop == false, % number of steps
   plot(M(:,1),M(:,2));  %map 
   plot(T(1),T(2),'*r'); %plot goal
   plot(x,y,'b+');    %particles
-  plot(AssumeRobot.x,AssumeRobot.y,'xr');%know position of the robot 
-  plot(RealRobot.x,RealRobot.y,'or');   %True position 
+  plot(KnowRobot.x,KnowRobot.y,'xr');%know position of the robot 
   legend('True position','map','goal','paticles');
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%

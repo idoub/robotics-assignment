@@ -7,21 +7,21 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[80,80];
-S=[50,25];
+T=[20,20];
+S=[80,80];
 step=10;
 nextstep = T;
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
-RealRobot=RobotModel(S(1),S(2), 0.5);%robot use for simulating captor
+RealRobot=RobotModel(S(1),S(2),0.5);%robot use for simulating captor
          plot(RealRobot.x,RealRobot.y,'or');
-AssumeRobot=RobotModel(0,0,0); %Robot use for pathfinding
+AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
 %                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
 orientstd=0.5; % orientation standard deviation in degrees
-Wgtthreshold= 0.05; % relative limit to keep the particles 
+Wgtthreshold= 0.10; % relative limit to keep the particles 
 dump =0; %anti dumping coef
 ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.8; % how far the resample particle are randomly distributed aroud heavy solution in space
@@ -49,6 +49,7 @@ while stop == false, % number of steps
     
     %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     lost = true; % Just to enter the loop
+    lost1 =false;
     while (lost == true)
         %-----Reading Robot sensor----------
         sensorRobot = sense(RealRobot,M,nbmeasure); % distance from 0 to a fictional wall + error
@@ -69,7 +70,10 @@ while stop == false, % number of steps
             clear theta
             clear w
            [x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M);
-            disp('lost');
+           if lost1 == true %anti stuck in lost place
+               lost=false
+           end
+           lost1=true
         else
             lost = false;
              %------------------------- Resampling ---------------------------------
@@ -90,6 +94,7 @@ while stop == false, % number of steps
   % enable to plot step by step
   %hold off
   hold on
+  waitforbuttonpress
   plot(M(:,1),M(:,2));  %map 
   plot(T(1),T(2),'*r'); %plot goal
   plot(x,y,'b+');    %particles
@@ -134,7 +139,7 @@ forward(RealRobot,move);
      
 % Evaluate if we are arrive
 per = Circle_probabilie(T(1),T(2),1.4,x,y,w)
-if per > 0.5
+if per > 0.55
     stop = true
 end
 
