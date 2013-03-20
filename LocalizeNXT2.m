@@ -23,27 +23,21 @@ nxt.initAll();
 
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
-orientstd=1.5; % orientation standard deviation in degrees
-Wgtthreshold= 0.25; % relative limit to keep the particles 
+orientstd=0.5; % orientation standard deviation in degrees
+Wgtthreshold= 0.05; % relative limit to keep the particles 
 dump =0; %anti dumping coef
-ScanLarge=2; % how far the resample particle are randomly distributed aroud heavy solution in space
-ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
-dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=0;
+ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
+ScanTheta=0.8; % how far the resample particle are randomly distributed aroud heavy solution in space
+dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
+lostthreshold=10e-8;
 %-------------------------------Sensor------------------------------------
 nbmeasure = 4; %number of measurement
-sensorstd = 30; % error of sensor for calculation
+sensorstd = 3; % error of sensor for calculation
 sensorstdReal = 0;%5;%real error of sensor 
 %----------------------- initialisation of the particles-------------------
 xyRes = 8;
 ThetaRes = 50;
-
-clear x
-clear y 
-clear theta
-clear w
-[x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M);
-plot(x,y,'+')
+[x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M)
 
 
  
@@ -104,9 +98,10 @@ while stop == false, % number of steps
   hold on
   plot(M(:,1),M(:,2));  %map 
   plot(T(1),T(2),'*r'); %plot goal
-  plot(x,y,'b+');       %particles
-  plot(KnowRobot.x,KnowRobot.y,'xr');   %know position of the robot  
-  %plot(RealRobot.x,RealRobot.y,'or');   %True position 
+  plot(x,y,'b+');    %particles
+  plot(AssumeRobot.x,AssumeRobot.y,'xr');%know position of the robot 
+  plot(RealRobot.x,RealRobot.y,'or');   %True position 
+  legend('True position','map','goal','paticles');
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -130,8 +125,8 @@ while stop == false, % number of steps
   
 %------------------------ Simulated real  robot----------------------------
 % Evaluate if we are arrive
-per = Circle_probabilie(T(1),T(2),4,x,y,w)
-if per > 0.8
+per = Circle_probabilie(T(1),T(2),1.4,x,y,w)
+if per > 0.5
     stop = true
 end
 

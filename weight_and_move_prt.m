@@ -3,7 +3,7 @@ for j=1:nparticles %repet times number of particles
         
         %-------------------------- Move particles ------------------------
         e = 0 + transstd*randn(1,1); %random Gaussian number with mean 0 and std transstd
-        f = 0 + (orientstd*(pi/180)).*randn(1,1); %random Gaussian number with mean 0 and std orienstd
+        f = 0 + (orientstd*(pi/180))*randn(1,1); %random Gaussian number with mean 0 and std orienstd
         theta(j)=theta(j)+moveTheta+f;
         x(j)=x(j)+(move+e)*cos(theta(j));
         y(j)=y(j)+(move+e)*sin(theta(j));
