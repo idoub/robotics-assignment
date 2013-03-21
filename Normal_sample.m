@@ -24,7 +24,7 @@ for i=1:round(MaxX/xyRes)*round(MaxY/xyRes)
             k=k+1;
             x(k)=posSquarex(i);
             y(k)=posSquarey(i);
-            theta(k)= j*ThetaRes*pi/180;
+            theta(k)= j*ThetaRes*pi/180 -pi;
         end
     end
 end

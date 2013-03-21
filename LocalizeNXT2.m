@@ -6,9 +6,9 @@ hold on
 
 %-------------------------Map definition-----------------------------------
 
-M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[20,80];
-S=[20,20];
+M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105];
+T=[25,80];
+S=[25,25];
 step=10;
 %nextstep = T;
 
@@ -17,27 +17,26 @@ step=10;
 step=10; %length of step in cm
 %RealRobot=RobotModel(80,80, 13 *pi/180);%robot use for simulating captor
 %         plot(RealRobot.x,RealRobot.y,'or');
-KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding                            
+KnowRobot=RobotModel(0,0,pi/2); %Robot use for pathfinding                            
 nxt = NXTRobot(0,0,0);
 nxt.initAll();
 
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
 orientstd=0.5; % orientation standard deviation in degrees
-Wgtthreshold= 0.10% relative limit to keep the particles 
+Wgtthreshold= 0.30;% relative limit to keep the particles 
 dump =0; %anti dumping coef
 ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0.8; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=0% 2e-8;   % the more high it is the easier it is to get lost
+lostthreshold=0;% 2e-8;   % the more high it is the easier it is to get lost
 %-------------------------------Sensor------------------------------------
 nbmeasure = 5; %number of measurement
-sensorstd = 3; % error of sensor for calculation
-sensorstdReal = 0;%5;%real error of sensor 
+sensorstd = 2; % error of sensor for calculation
 %----------------------- initialisation of the particles-------------------
 xyRes = 8;
 ThetaRes = 50;
-[x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M)
+[x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M);
 
 
  
@@ -138,4 +137,3 @@ end
 
                                                                            
 end
-                                                                             

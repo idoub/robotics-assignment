@@ -6,7 +6,7 @@ function [out] = senseParticles(x,y,w,M,numreadings,angleError)
     angle = w;% -pi;                                                            % Starting angle is -pi (relative to robot this would be backwards)
     out = zeros(1,numreadings);                                                 % Change this to w to get the first measure forward the robot (Antoine 22/02/13)
     for m=1:numreadings                                                         % For each reading
-        out(m) = senseSingleP(x,y,w,XY1,angle+angleError(m)*pi/180);                                 % Take a sensor measurement
+        out(m) = senseSingleP(x,y,w,XY1,angle+(angleError(m)*pi/180));                                 % Take a sensor measurement
         angle = angle + angleChange;                                            % Adjust the angle of the next measurement
     end
 

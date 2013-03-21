@@ -1,28 +1,30 @@
-%clear all
+clear all
 figure(10)
 hold on
 %%%%%%%%%%%%%%%%%%%%%%%%%% INITIALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %-------------------------Map definition-----------------------------------
-
+% 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[23,27.5];
-S=[80,80];
+T=[80,80];
+S=[50,30];
 step=10;
 nextstep = T;
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
+
 RealRobot=RobotModel(S(1),S(2),0);%robot use for simulating captor
          plot(RealRobot.x,RealRobot.y,'or');
-AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
+%AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
+AssumeRobot=RobotModel(0,0,pi/2);
 %                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
 %-------------------------Error particles----------------------------------
-transstd=0.5; % translation standard deviation in cm
-orientstd=0.3; % orientation standard deviation in degrees
-Wgtthreshold= 0.50; % relative limit to keep the particles 
-dump =0.5; %anti dumping coef 0 => no anti dumping ; 1=> dumping
+transstd=5; % translation standard deviation in cm
+orientstd=3; % orientation standard deviation in degrees
+Wgtthreshold= 0.10; % relative limit to keep the particles 
+dump =0; %anti dumping coef 0 => no anti dumping ; 1=> dumping
 ScanLarge=0; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
@@ -87,21 +89,21 @@ while stop == false, % number of steps
  %%%%%%%%%%%%%%%%%%%%%%%%%   ROBOT MOVE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %-----------------------  change position  ------------------------------
   [~,MaxInd]=max(w); %MaxInd is the indice of the heaviest particle
-  AssumeRobot=RobotModel(x(MaxInd),y(MaxInd),theta(MaxInd));
+  AssumeRobot=RobotModel(x(MaxInd),y(MaxInd),theta(MaxInd))
   newPath = Pathfinding(M, [x(MaxInd) y(MaxInd)], T);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   
   % enable to plot step by step
   %hold off
   hold on
-  waitforbuttonpress
+ % waitforbuttonpress
   plot(M(:,1),M(:,2));  %map 
   plot(T(1),T(2),'*r'); %plot goal
   plot(x,y,'b+');    %particles
   plot(AssumeRobot.x,AssumeRobot.y,'xr');%know position of the robot 
   plot(RealRobot.x,RealRobot.y,'or');   %True position 
   legend('True position','map','goal','paticles');
- 
+  text(RealRobot.x+2,RealRobot.y+2,int2str(nbstep))
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% xgoEND PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -120,13 +122,13 @@ while stop == false, % number of steps
       disp('flag')
       xgo= (nextstep(1)-AssumeRobot.x)*step/dist + AssumeRobot.x;
       ygo= (nextstep(2)-AssumeRobot.y)*step/dist + AssumeRobot.y;
-      [move,moveTheta] = goto(AssumeRobot,xgo,ygo);
+      [move,moveTheta] = goto(AssumeRobot,xgo,ygo)
 %             plot(AssumeRobot.x,AssumeRobot.y,'sr');
   else
  
       xgo= nextstep(1);
       ygo= nextstep(2);
-      [move,moveTheta] = goto(AssumeRobot,xgo,ygo);
+      [move,moveTheta] = goto(AssumeRobot,xgo,ygo)
      % plot(AssumeRobot.x,AssumeRobot.y,'sr');
 
   
@@ -134,7 +136,11 @@ while stop == false, % number of steps
 
 
 %------------------------ Simulated real  robot----------------------------
-left(RealRobot,moveTheta);
+if moveTheta > 0
+    RealRobot.left(moveTheta);
+else
+    RealRobot.right(-moveTheta);
+end
 forward(RealRobot,move);
      
 % Evaluate if we are arrive
@@ -149,3 +155,5 @@ disp('true position');
 disp(RealRobot);
 disp('nbstep')
 disp(nbstep)
+disp('offthemark');
+disp(sqrt((RealRobot.x - T(1))^2+(RealRobot.y - T(2))^2));

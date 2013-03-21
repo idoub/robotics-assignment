@@ -53,8 +53,13 @@ classdef NXTRobot < handle
             function initConnect(NXT)
                     % clean up workspace
                     COM_CloseNXT('all')
+<<<<<<< HEAD
                     %close all
                     %clear all
+=======
+                    close all
+                    clear all
+>>>>>>> ebcf58e76e83b3a70b47f01142b21d9a08f77bb0
 
                     % set the nxt handle
                     NXT.handle = COM_OpenNXT();                     % open usb connection
@@ -335,8 +340,13 @@ classdef NXTRobot < handle
              %angleError
              NXT.count = mod(NXT.count+1,2);
              
+<<<<<<< HEAD
                                  out
                     angleError
+=======
+             out
+             angleError
+>>>>>>> ebcf58e76e83b3a70b47f01142b21d9a08f77bb0
         end
                 
         function reading = senseSingle(NXT)
