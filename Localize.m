@@ -1,4 +1,4 @@
-clear all
+%clear all
 figure(10)
 hold on
 %%%%%%%%%%%%%%%%%%%%%%%%%% INITIALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,14 +7,19 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
+<<<<<<< HEAD
 T=[40,25];
+=======
+T=[23,27.5];
+>>>>>>> 1f03e1b13d100400dbc7a5e6b95b1d1b66003510
 S=[80,80];
 step=10;
 nextstep = T;
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
-RealRobot=RobotModel(S(1),S(2),pi/2);%robot use for simulating captor
+
+RealRobot=RobotModel(S(1),S(2),0);%robot use for simulating captor
          plot(RealRobot.x,RealRobot.y,'or');
 %AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
 AssumeRobot=RobotModel(0,0,pi/2);
