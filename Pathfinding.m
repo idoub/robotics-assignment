@@ -4,19 +4,8 @@ function [Path] = Pathfinding(M,P1,P2)
     %   point P1=[X,Y] and an end point P2=[X,Y] and returns a set of points that
     %   are the shortest path to get from P1 to P2.
 
-    visualise = 0;
-    ROBOTWIDTH = 15;
+    ROBOTWIDTH = 17;
     MINDIST = 2;
-    Graph = [];
-
-    hold all
-    if(visualise)
-        plot(M(:,1),M(:,2));
-        plot(P1(1),P1(2),'xr');
-        plot(P2(1),P2(2),'xr');
-        text(P1(1)+2,P1(2),'Start');
-        text(P2(1)+2,P2(2),'End');
-    end
 
     % Define lines from points
     M1 = circshift(M,1);
@@ -30,9 +19,6 @@ function [Path] = Pathfinding(M,P1,P2)
     % area
     N1 = circshift(Normals,-1);
     Nav = M + Normals + N1;
-    if(visualise)
-        fill(Nav(:,1),Nav(:,2),[0.63,1,0.67])
-    end
 
     % Make navigation mesh
     Nav1 = circshift(Nav,1);
@@ -57,12 +43,9 @@ function [Path] = Pathfinding(M,P1,P2)
 
     % Make a list of nodes for pathfinding
     Nodes = [Point1; Nav; Point2];
-    % Show the node numbers on the figure
-    if(visualise)
-        for i=1:length(Nodes)
-            text(Nodes(i,1)-1,Nodes(i,2)-1,num2str(i));
-        end
-    end
+    
+    Graph = NaN(length(Nodes)^2,4);                                             % Preallocate Graph for speed
+    GraphIndex = 1;
     
     % For each node find paths to every other visible node
     for i=1:length(Nodes)
@@ -79,8 +62,9 @@ function [Path] = Pathfinding(M,P1,P2)
             cp(ismember(cp,Nav,'rows'),:) = 0;                                  % Remove actual map points
             cp(all(isnan(cp),2),:) = 0;                                         % Remove NAN rows
             
-            center = [(lines(j,3) - lines(j,1))/2 + lines(j,1),                 % Find center point of each line
-                (lines(j,4) - lines(j,2))/2 + lines(j,2)];
+            % Find center point of each line
+            center = [(lines(j,3) - lines(j,1))/2 + lines(j,1),(lines(j,4) - lines(j,2))/2 + lines(j,2)];
+            
             [in on] = inpolygon(center(1),center(2),Nav(:,1),Nav(:,2));         % Find whether the center is actually within the navigation mesh
             cp(on)=0;                                                           % Include lines that are incident with navigation mesh edges
             cp(cp==repmat(Nodes(i,:),length(cp(:,1)),1))=0;                     % Drop the collisioin point if the point of collision is the same as the current node
@@ -89,18 +73,16 @@ function [Path] = Pathfinding(M,P1,P2)
                 if(in==1)                                                       % If the center does lie within the navigation mesh
                     lineReverse = [lines(j,3:4),lines(j,1:2)];                  % Reverse the line
                     if(~ismember(lineReverse,Graph,'rows'))                     % If the reverse isn't already included in the graph
-                        Graph = [Graph; lines(j,:)];                            % Add this line to the graph
-                        if(visualise)
-                            plot([lines(j,1),lines(j,3)],[lines(j,2),lines(j,4)],'-m');
-                        end
+                        Graph(GraphIndex,:) = lines(j,:);                       % Add this line to the graph
+                        GraphIndex = GraphIndex + 1;                            % and increment the index
                     end
                 end
             end
         end
     end
     
+    Graph = Graph(~isnan(Graph(:,1)),:);                                        % Remove NaN rows from Graph
     Graph(all(Graph(:,1:2)==Graph(:,3:4),2),:) = [];                            % Remove connections from nodes to themselves
-    
     distances = sqrt((Graph(:,1)-Graph(:,3)).^2 + (Graph(:,2)-Graph(:,4)).^2);  % Calculate distances of all lines in graph
     
     % Now just run Dijkstra's algorithm to find the optimal path
