@@ -1,4 +1,4 @@
-%clear all
+clear all
 figure(10)
 hold on
 %%%%%%%%%%%%%%%%%%%%%%%%%% INITIALISATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -7,28 +7,29 @@ hold on
 %-------------------------Map definition-----------------------------------
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[23,27.5];
-S=[80,80];
+T=[25,80];
+S=[25,25];
 step=10;
 nextstep = T;
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
-RealRobot=RobotModel(S(1),S(2),0);%robot use for simulating captor
-         plot(RealRobot.x,RealRobot.y,'or');
-AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
+nxt = NXTRobot(0,0,0);
+nxt.initAll();
+%AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
+AssumeRobot=RobotModel(0,0,pi/2);
 %                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
-orientstd=0.3; % orientation standard deviation in degrees
-Wgtthreshold= 0.50; % relative limit to keep the particles 
-dump =0.5; %anti dumping coef 0 => no anti dumping ; 1=> dumping
-ScanLarge=0; % how far the resample particle are randomly distributed aroud heavy solution in space
-ScanTheta=0; % how far the resample particle are randomly distributed aroud heavy solution in space
+orientstd=0.5; % orientation standard deviation in degrees
+Wgtthreshold= 0.10; % relative limit to keep the particles 
+dump =0; %anti dumping coef 0 => no anti dumping ; 1=> dumping
+ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
+ScanTheta=0.8; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=10e-8;
+lostthreshold=0;%10e-8;
 %-------------------------------Sensor------------------------------------
-nbmeasure = 4; %number of measurement
+nbmeasure = 5; %number of measurement
 sensorstd = 3; % error of sensor for calculation
 sensorstdReal = 0;%5;%real error of sensor 
 %----------------------- initialisation of the particles-------------------
@@ -52,12 +53,13 @@ while stop == false, % number of steps
     lost1 =false;
     while (lost == true)
         %-----Reading Robot sensor----------
-        sensorRobot = sense(RealRobot,M,nbmeasure) % distance from 0 to a fictional wall + error
-        for h=1:nbmeasure
-            sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
-        end
+        [sensorRobot angleError] = nxt.sense(nbmeasure,60);
+        %sensorRobot = sense(RealRobot,M,nbmeasure); % distance from 0 to a fictional wall + error
+%         for h=1:nbmeasure
+%             sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
+%         end
         %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        angleError=zeros(nbmeasure,1);
+        %angleError=zeros(nbmeasure,1);
         [x,y,theta,w] = weight_and_move_prt(x,y,theta,w,M,nparticles,transstd,orientstd,nbmeasure,sensorstd,move,moveTheta,sensorRobot,dump,angleError);
         Maxweight= max(w); % absolute weight to see if the robot is lost
         %------------------------- Normalisation of particles -----------------
@@ -99,7 +101,6 @@ while stop == false, % number of steps
   plot(T(1),T(2),'*r'); %plot goal
   plot(x,y,'b+');    %particles
   plot(AssumeRobot.x,AssumeRobot.y,'xr');%know position of the robot 
-  plot(RealRobot.x,RealRobot.y,'or');   %True position 
   legend('True position','map','goal','paticles');
  
 
@@ -134,8 +135,15 @@ while stop == false, % number of steps
 
 
 %------------------------ Simulated real  robot----------------------------
-left(RealRobot,moveTheta);
-forward(RealRobot,move);
+if moveTheta > 0
+    nxt.turnLeft(moveTheta);
+elseif moveTheta < 0
+    nxt.turnRight(-moveTheta);
+end
+nxt.forward(move);
+    
+% left(RealRobot,moveTheta);
+% forward(RealRobot,move);
      
 % Evaluate if we are arrive
 per = Circle_probabilie(T(1),T(2),1.4,x,y,w)
@@ -149,3 +157,5 @@ disp('true position');
 disp(RealRobot);
 disp('nbstep')
 disp(nbstep)
+disp('offthemark');
+disp(sqrt((RealRobot.x - T(1))^2+(RealRobot.y - T(2))^2));

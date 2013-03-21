@@ -8,25 +8,25 @@ hold on
 
 M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
 T=[23,27.5];
-S=[80,80];
+S=[82,82];
 step=10;
 nextstep = T;
 
 %-------------------------Robot simulation---------------------------------
 step=10; %length of step in cm
-RealRobot=RobotModel(S(1),S(2),0);%robot use for simulating captor
+RealRobot=RobotModel(S(1),S(2),1);%robot use for simulating captor
          plot(RealRobot.x,RealRobot.y,'or');
 AssumeRobot=RobotModel(0,0,-10.45); %Robot use for pathfinding
 %                ToGo=[30,80]; %REMOVE WHEN PATHFINDING WORK
 %-------------------------Error particles----------------------------------
-transstd=0.5; % translation standard deviation in cm
-orientstd=0.3; % orientation standard deviation in degrees
+transstd=4; % translation standard deviation in cm
+orientstd=3; % orientation standard deviation in degrees
 Wgtthreshold= 0.50; % relative limit to keep the particles 
 dump =0.5; %anti dumping coef 0 => no anti dumping ; 1=> dumping
 ScanLarge=0; % how far the resample particle are randomly distributed aroud heavy solution in space
 ScanTheta=0; % how far the resample particle are randomly distributed aroud heavy solution in space
 dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=10e-8;
+lostthreshold=100e-8;
 %-------------------------------Sensor------------------------------------
 nbmeasure = 4; %number of measurement
 sensorstd = 3; % error of sensor for calculation
