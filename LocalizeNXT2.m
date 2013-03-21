@@ -6,9 +6,9 @@ hold on
 
 %-------------------------Map definition-----------------------------------
 
-M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105]
-T=[80,80];
-S=[20,20];
+M=[0,0;60,0;60,45;45,45;45,59;106,59;106,105;0,105];
+T=[25,80];
+S=[25,25];
 step=10;
 %nextstep = T;
 
@@ -17,33 +17,26 @@ step=10;
 step=10; %length of step in cm
 %RealRobot=RobotModel(80,80, 13 *pi/180);%robot use for simulating captor
 %         plot(RealRobot.x,RealRobot.y,'or');
-KnowRobot=RobotModel(0,0,0); %Robot use for pathfinding                            
+KnowRobot=RobotModel(0,0,pi/2); %Robot use for pathfinding                            
 nxt = NXTRobot(0,0,0);
 nxt.initAll();
 
 %-------------------------Error particles----------------------------------
 transstd=0.5; % translation standard deviation in cm
-orientstd=1.5; % orientation standard deviation in degrees
-Wgtthreshold= 0.25; % relative limit to keep the particles 
+orientstd=0.5; % orientation standard deviation in degrees
+Wgtthreshold= 0.30;% relative limit to keep the particles 
 dump =0; %anti dumping coef
-ScanLarge=2; % how far the resample particle are randomly distributed aroud heavy solution in space
-ScanTheta=0.5; % how far the resample particle are randomly distributed aroud heavy solution in space
-dist =50; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
-lostthreshold=0;
+ScanLarge=3; % how far the resample particle are randomly distributed aroud heavy solution in space
+ScanTheta=0.8; % how far the resample particle are randomly distributed aroud heavy solution in space
+dist =100; %number of particale that beneficiat of the linear resample( heavy =. more particle in linear way)
+lostthreshold=0;% 2e-8;   % the more high it is the easier it is to get lost
 %-------------------------------Sensor------------------------------------
 nbmeasure = 5; %number of measurement
-sensorstd = 30; % error of sensor for calculation
-sensorstdReal = 0;%5;%real error of sensor 
+sensorstd = 2; % error of sensor for calculation
 %----------------------- initialisation of the particles-------------------
 xyRes = 8;
 ThetaRes = 50;
-
-clear x
-clear y 
-clear theta
-clear w
 [x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M);
-plot(x,y,'+')
 
 
  
@@ -58,9 +51,11 @@ while stop == false, % number of steps
   
    %%%%%%%%%%%%%%%%%%%%%%%%    PARTICLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    lost = true; % enter the loop
+   lost1 = false;
    while (lost == true)
         %-----Reading Robot sensor----------
         [sensorRobot angleError] = nxt.sense(nbmeasure,60)
+%         angleError=zeros(nbmeasure,1)
 %         for h=1:nbmeasure
 %             sensorRobot(h) = sensorRobot(h) + sensorstdReal* randn(1,1);
 %         end
@@ -76,16 +71,22 @@ while stop == false, % number of steps
             clear y 
             clear theta
             clear w
-           [x,y,theta,w,nparticles] = Normal_sample(xyRes, ThetaRes,M);
+           [x,y,w,theta,nparticles] = Normal_sample(xyRes, ThetaRes,M)
             clf(figure)
             plot(x,y,'+')
             disp('lost');
+           if lost1 == true %anti stuck in lost place
+               lost=false
+           end
+           lost1=true
         else
             lost = false;
              %------------------------- Resampling ---------------------------------
             [x,y,theta,w ]=resample(Wgtthreshold,x,y,theta,w,ScanTheta*orientstd,ScanLarge*transstd,dist);
             disp('notlost')
+
         end
+        
     end
    
 
@@ -103,9 +104,9 @@ while stop == false, % number of steps
   hold on
   plot(M(:,1),M(:,2));  %map 
   plot(T(1),T(2),'*r'); %plot goal
-  plot(x,y,'b+');       %particles
-  plot(KnowRobot.x,KnowRobot.y,'xr');   %know position of the robot  
-  %plot(RealRobot.x,RealRobot.y,'or');   %True position 
+  plot(x,y,'b+');    %particles
+  plot(KnowRobot.x,KnowRobot.y,'xr');%know position of the robot 
+  legend('True position','map','goal','paticles');
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -129,11 +130,10 @@ while stop == false, % number of steps
   
 %------------------------ Simulated real  robot----------------------------
 % Evaluate if we are arrive
-per = Circle_probabilie(T(1),T(2),4,x,y,w)
-if per > 0.8
+per = Circle_probabilie(T(1),T(2),1.4,x,y,w)
+if per > 0.5
     stop = true
 end
 
                                                                            
 end
-                                                                             

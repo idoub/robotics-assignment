@@ -49,6 +49,9 @@ classdef RobotModel < handle
             if RM.theta < -pi                                                   % If the angle is less than minus pi (i.e. passed beyond the negative x direction)
                 RM.theta = (2*pi) + RM.theta;                                   % Add to 2pi
             end
+            if RM.theta > pi                                                   % If the angle is less than minus pi (i.e. passed beyond the negative x direction)
+                RM.theta = (2*pi) - RM.theta;                                   % Add to 2pi
+            end
         end
 
         function rightd(RM,degrees)
@@ -60,6 +63,9 @@ classdef RobotModel < handle
             if RM.theta > pi                                                    % If the angle is now more than pi
                 RM.theta = RM.theta - (2*pi);                                   % Subtract 2pi
             end
+            if RM.theta < -pi                                                   % If the angle is less than minus pi (i.e. passed beyond the negative x direction)
+                RM.theta = (2*pi) + RM.theta;                                   % Add to 2pi
+            end
         end
 
         function leftd(RM,degrees)
@@ -70,8 +76,8 @@ classdef RobotModel < handle
             distX = newX-RM.x;                                                  % Identify the distance to travel in X
             distY = newY-RM.y;                                                  % Identify the distance to travel in Y
             dist = sqrt(distX^2+distY^2);                                       % Identify the direct distance to travel
-            newAngle = atan2(distY,distX);                                      % Mark the new angle the robot must face (returns angle in radians)
-            rotate = newAngle - RM.theta;                                       % Subtract the current angle from the intended angle
+            newAngle = atan2(distY,distX)                                      % Mark the new angle the robot must face (returns angle in radians)
+            rotate = newAngle - RM.theta                                       % Subtract the current angle from the intended angle
 
             if rotate < -pi                                                     % Keep the values of rotate between pi and -pi
                 rotate = (2*pi) + rotate;
@@ -80,11 +86,11 @@ classdef RobotModel < handle
                 rotate = rotate - (2*pi);
             end
 
-            if rotate > 0                                                      % Determine which direction to turn and then rotate
-                RM.right(rotate);
+            if rotate < 0                                                      % Determine which direction to turn and then rotate
+                RM.right(abs(rotate));
                 disp(['Turn right ',num2str(rotate),' degrees.']);
             else
-                RM.left(rotate);
+                RM.left(abs(rotate));
                 disp(['Turn left ',num2str(rotate),' degrees.']);
             end
 
